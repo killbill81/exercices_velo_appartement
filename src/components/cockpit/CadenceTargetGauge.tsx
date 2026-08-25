@@ -5,13 +5,13 @@ import { NeonArcGauge } from './NeonArcGauge';
 interface CadenceTargetGaugeProps {
   currentCadenceRpm: number;
   targetCadenceRpm?: number;
-  size?: 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl';
 }
 
 export const CadenceTargetGauge: React.FC<CadenceTargetGaugeProps> = ({
   currentCadenceRpm,
   targetCadenceRpm = 85,
-  size = 'lg',
+  size = 'compact',
 }) => {
   const feedback = getCadenceFeedback(currentCadenceRpm, targetCadenceRpm);
 

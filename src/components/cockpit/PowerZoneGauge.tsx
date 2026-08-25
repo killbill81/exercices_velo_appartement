@@ -7,14 +7,14 @@ interface PowerZoneGaugeProps {
   currentWatts: number;
   targetWatts: number;
   ftpWatts: number;
-  size?: 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl';
 }
 
 export const PowerZoneGauge: React.FC<PowerZoneGaugeProps> = ({
   currentWatts,
   targetWatts,
   ftpWatts,
-  size = 'lg',
+  size = 'compact',
 }) => {
   const currentZone = getPowerZone(currentWatts, ftpWatts);
   const theme = getZoneTheme(currentZone.zone);

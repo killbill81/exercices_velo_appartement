@@ -12,7 +12,7 @@ export interface NeonArcGaugeProps {
   subLabel?: string;
   statusBadge?: string;
   statusBadgeClass?: string;
-  size?: 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl';
 }
 
 export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
@@ -70,19 +70,23 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
   // Dimension scaling
   const sizeClasses = {
-    md: 'w-48 h-48 sm:w-56 sm:h-56',
-    lg: 'w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72',
-    xl: 'w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80',
+    compact: 'w-32 h-32 xs:w-36 xs:h-36 sm:w-44 sm:h-44',
+    md: 'w-44 h-44 sm:w-52 sm:h-52',
+    lg: 'w-52 h-52 sm:w-60 sm:h-60 lg:w-64 lg:h-64',
+    xl: 'w-60 h-60 sm:w-68 sm:h-68 lg:w-76 lg:h-76',
   }[size];
 
   const valueFontSize = {
+    compact: 'text-3xl xs:text-4xl sm:text-5xl',
     md: 'text-4xl sm:text-5xl',
     lg: 'text-5xl sm:text-6xl lg:text-7xl',
     xl: 'text-6xl sm:text-7xl lg:text-8xl',
   }[size];
 
+  const containerPadding = size === 'compact' ? 'p-2 sm:p-3' : 'p-3 sm:p-4';
+
   return (
-    <div className="relative flex flex-col items-center justify-center p-3 sm:p-4 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-md transition-all duration-300 hover:border-slate-700">
+    <div className={`relative flex flex-col items-center justify-center ${containerPadding} rounded-2xl sm:rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-slate-700`}>
       {/* Header Label & Badge */}
       <div className="w-full flex items-center justify-between px-2 mb-1 z-10">
         <span className="text-xs font-black tracking-wider text-slate-400 uppercase">

@@ -114,7 +114,11 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 pb-24 md:pb-6">
+      <main className={`flex-1 max-w-7xl w-full mx-auto ${
+        activeTab === 'cockpit'
+          ? 'p-1.5 sm:p-4 pb-16 md:pb-4 overflow-hidden'
+          : 'p-3 sm:p-6 pb-24 md:pb-6 overflow-y-auto'
+      }`}>
         {activeTab === 'cockpit' && (
           <LiveCockpit
             bikeState={bikeState}

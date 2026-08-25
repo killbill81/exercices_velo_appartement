@@ -154,7 +154,7 @@ export function calculateHeartRateZones(maxHrBpm: number): HeartRateZone[] {
     },
     {
       zone: 5,
-      name: 'Z5 - Zone Rouge Maximale',
+      name: 'Z5 - Effort Maximal / VO2 Max',
       minPercent: 91,
       maxPercent: 100,
       minBpm: Math.round(maxHr * 0.91),
@@ -162,6 +162,20 @@ export function calculateHeartRateZones(maxHrBpm: number): HeartRateZone[] {
       color: '#ef4444',
     },
   ];
+}
+
+/**
+ * Trouve la zone de fréquence cardiaque pour un BPM donné
+ */
+export function getHeartRateZone(currentBpm: number, maxHrBpm: number): HeartRateZone {
+  const zones = calculateHeartRateZones(maxHrBpm);
+  if (currentBpm <= 0) return zones[0];
+  for (const zone of zones) {
+    if (currentBpm <= zone.maxBpm) {
+      return zone;
+    }
+  }
+  return zones[zones.length - 1];
 }
 
 /**
