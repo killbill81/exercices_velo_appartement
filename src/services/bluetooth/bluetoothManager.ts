@@ -237,18 +237,16 @@ class BluetoothManager {
       this.connectionState.watchError = null;
       this.notifyConnectionChanged();
 
-      // Scanner les appareils diffusant le service standard Heart Rate (0x180D)
+      // Scanner tous les appareils BLE à proximité pour trouver la montre
       const device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { services: [BLE_SERVICES.HEART_RATE] },
-          { namePrefix: 'Pixel Watch' },
-          { namePrefix: 'Google' },
-          { namePrefix: 'Watch' },
-          { namePrefix: 'Polar' },
-          { namePrefix: 'Garmin' },
-          { namePrefix: 'Wahoo' },
-        ],
-        optionalServices: [BLE_SERVICES.HEART_RATE]
+        acceptAllDevices: true,
+        optionalServices: [
+          BLE_SERVICES.HEART_RATE,
+          BLE_SERVICES.FTMS,
+          0x1800,
+          0x1801,
+          0x180A,
+        ]
       });
 
       this.watchDevice = device;
@@ -262,7 +260,12 @@ class BluetoothManager {
 
       const server = await device.gatt.connect();
 
-      const service = await server.getPrimaryService(BLE_SERVICES.HEART_RATE);
+      let service: BluetoothRemoteGATTService | null = null;
+      try {
+        service = await server.getPrimaryService(BLE_SERVICES.HEART_RATE);
+      } catch {
+        throw new Error("Le service Cardio (0x180D) n'est pas encore actif sur la montre. Activez la diffusion cardio sur votre Pixel Watch (ex: app 'Heart Rate to BLE' ou 'Heart for Bluetooth').");
+      }
       const hrChar = await service.getCharacteristic(BLE_CHARACTERISTICS.HEART_RATE_MEASUREMENT);
 
       await hrChar.startNotifications();

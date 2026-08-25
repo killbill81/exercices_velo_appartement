@@ -165,14 +165,17 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
               )}
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 mb-3.5 space-y-1">
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 mb-3.5 space-y-1.5">
               <div className="flex items-center gap-1.5 text-cyan-400 font-semibold">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Priorité active au poignet :
               </div>
               <p className="text-slate-400">
-                La montre permet un relevé ininterrompu même quand vous lâchez le guidon du vélo. Si elle est déconnectée, l'app utilise automatiquement les capteurs métalliques du guidon.
+                La montre permet un relevé ininterrompu même quand vous lâchez le guidon du vélo.
               </p>
+              <div className="pt-1.5 border-t border-slate-800/80 text-[10px] text-amber-300/90 leading-tight">
+                💡 <strong>Activation requise sur la montre :</strong> Par sécurité, Wear OS ne diffuse le signal cardio en balise Bluetooth que si une app de diffusion est active sur la montre (ex : app gratuite Wear OS <em>'Heart Rate to BLE'</em> ou <em>'Heart for Bluetooth'</em> sur le Play Store de votre montre, appuyez sur <em>Start</em> avant de cliquer sur Associer).
+              </div>
             </div>
 
             {connectionState.watchError && (
