@@ -51,7 +51,7 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
     !!workoutState.nextStep;
 
   return (
-    <div className="w-full h-[calc(100dvh-125px)] max-h-[calc(100dvh-125px)] flex flex-col justify-between overflow-hidden max-w-5xl mx-auto px-1 py-1">
+    <div className="w-full h-full max-h-full flex flex-col justify-between overflow-hidden max-w-7xl mx-auto px-1 py-0.5">
       {/* 1. Animation de Pulsation Lumineuse (T-3s) */}
       <VisualPulseOverlay
         isActive={isTransitioning}
@@ -61,80 +61,88 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
         nextWatts={workoutState.nextStep?.targetWatts}
       />
 
-      {/* 2. Haut : Timeline Compacte d'Intervalle */}
-      <div className="w-full shrink-0">
-        {workoutState.workout ? (
-          <IntervalTimeline
-            workout={workoutState.workout}
-            currentStepIndex={workoutState.currentStepIndex}
-            stepRemainingSeconds={workoutState.stepRemainingSeconds}
-            totalRemainingSeconds={workoutState.totalRemainingSeconds}
-            currentStep={workoutState.currentStep}
-            nextStep={workoutState.nextStep}
-          />
-        ) : (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex items-center justify-between gap-2 shadow-lg">
-            <div>
-              <h3 className="text-xs font-bold text-white">Aucun programme actif</h3>
-              <p className="text-[10px] text-slate-400">Pédalage libre ou choisissez un plan.</p>
-            </div>
-            <button
-              onClick={onOpenPlanSelector}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-slate-950 font-bold text-[11px] shadow-md transition-all shrink-0"
-            >
-              Choisir un plan
-            </button>
+      {/* 2. Conteneur Principal : 2 colonnes en Paysage, 1 colonne en Portrait */}
+      <div className="w-full h-full flex flex-col landscape:flex-row md:flex-row items-stretch justify-between gap-1.5 sm:gap-3 overflow-hidden">
+        
+        {/* COLONNE GAUCHE : Jauges Néon Duo (Watts + Cadence) */}
+        <div className="w-full landscape:w-[48%] md:w-[48%] flex flex-col justify-center items-center shrink-0 my-auto">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-3 w-full max-w-lg">
+            <PowerZoneGauge
+              currentWatts={bikeState.powerWatts}
+              targetWatts={workoutState.targetWatts}
+              ftpWatts={userProfile.ftpWatts}
+              size="compact"
+            />
+
+            <CadenceTargetGauge
+              currentCadenceRpm={bikeState.cadenceRpm}
+              targetCadenceRpm={workoutState.targetCadenceRpm || 85}
+              size="compact"
+            />
           </div>
-        )}
-      </div>
-
-      {/* 3. Centre : Jauges Géantes Néon Côte à Côte (Watts + Cadence) */}
-      <div className="w-full my-auto py-1">
-        <div className="grid grid-cols-2 gap-2 sm:gap-4 max-w-2xl mx-auto">
-          <PowerZoneGauge
-            currentWatts={bikeState.powerWatts}
-            targetWatts={workoutState.targetWatts}
-            ftpWatts={userProfile.ftpWatts}
-            size="compact"
-          />
-
-          <CadenceTargetGauge
-            currentCadenceRpm={bikeState.cadenceRpm}
-            targetCadenceRpm={workoutState.targetCadenceRpm || 85}
-            size="compact"
-          />
         </div>
-      </div>
 
-      {/* 4. Ruban Horizontal Haute Densité des Métriques */}
-      <div className="w-full shrink-0 py-0.5">
-        <CompactMetricStrip
-          heartRateBpm={bikeState.heartRateBpm}
-          heartRateSource={bikeState.heartRateSource}
-          maxHeartRateBpm={userProfile.maxHeartRateBpm}
-          speedKmh={bikeState.speedKmh}
-          distanceKm={bikeState.distanceKm}
-          caloriesKcal={bikeState.caloriesKcal}
-          elapsedSeconds={workoutState.totalElapsedSeconds || bikeState.elapsedTimeSeconds}
-          resistanceLevel={bikeState.resistanceLevel}
-          isAutoControlActive={bikeState.isAutoControlActive}
-          onToggleAutoControl={() => bluetoothManager.setAutoControlEnabled(!bikeState.isAutoControlActive)}
-        />
-      </div>
+        {/* COLONNE DROITE : Timeline, Métriques & Commandes */}
+        <div className="w-full landscape:w-[52%] md:w-[52%] flex flex-col justify-between h-full gap-1 overflow-hidden py-0.5">
+          {/* Haut Droite : Timeline Palier */}
+          <div className="w-full shrink-0">
+            {workoutState.workout ? (
+              <IntervalTimeline
+                workout={workoutState.workout}
+                currentStepIndex={workoutState.currentStepIndex}
+                stepRemainingSeconds={workoutState.stepRemainingSeconds}
+                totalRemainingSeconds={workoutState.totalRemainingSeconds}
+                currentStep={workoutState.currentStep}
+                nextStep={workoutState.nextStep}
+              />
+            ) : (
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex items-center justify-between gap-2 shadow-lg">
+                <div>
+                  <h3 className="text-xs font-bold text-white">Aucun programme actif</h3>
+                  <p className="text-[10px] text-slate-400">Pédalage libre ou choisissez un plan.</p>
+                </div>
+                <button
+                  onClick={onOpenPlanSelector}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-slate-950 font-bold text-[11px] shadow-md transition-all shrink-0"
+                >
+                  Choisir un plan
+                </button>
+              </div>
+            )}
+          </div>
 
-      {/* 5. Bas : Commandes Tactiles Ancrées */}
-      <div className="w-full shrink-0 pt-0.5">
-        <LateralControls
-          status={workoutState.status}
-          intensityMultiplier={workoutState.intensityMultiplier}
-          onStart={onStartWorkout}
-          onPause={onPauseWorkout}
-          onResume={onResumeWorkout}
-          onSkipStep={onSkipStep}
-          onPreviousStep={onPreviousStep}
-          onAdjustIntensity={onAdjustIntensity}
-          onStop={onStopWorkout}
-        />
+          {/* Milieu Droite : Ruban Métriques */}
+          <div className="w-full shrink-0">
+            <CompactMetricStrip
+              heartRateBpm={bikeState.heartRateBpm}
+              heartRateSource={bikeState.heartRateSource}
+              maxHeartRateBpm={userProfile.maxHeartRateBpm}
+              speedKmh={bikeState.speedKmh}
+              distanceKm={bikeState.distanceKm}
+              caloriesKcal={bikeState.caloriesKcal}
+              elapsedSeconds={workoutState.totalElapsedSeconds || bikeState.elapsedTimeSeconds}
+              resistanceLevel={bikeState.resistanceLevel}
+              isAutoControlActive={bikeState.isAutoControlActive}
+              onToggleAutoControl={() => bluetoothManager.setAutoControlEnabled(!bikeState.isAutoControlActive)}
+            />
+          </div>
+
+          {/* Bas Droite : Commandes Tactiles */}
+          <div className="w-full shrink-0">
+            <LateralControls
+              status={workoutState.status}
+              intensityMultiplier={workoutState.intensityMultiplier}
+              onStart={onStartWorkout}
+              onPause={onPauseWorkout}
+              onResume={onResumeWorkout}
+              onSkipStep={onSkipStep}
+              onPreviousStep={onPreviousStep}
+              onAdjustIntensity={onAdjustIntensity}
+              onStop={onStopWorkout}
+            />
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -70,30 +70,30 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
   // Dimension scaling
   const sizeClasses = {
-    compact: 'w-32 h-32 xs:w-36 xs:h-36 sm:w-44 sm:h-44',
-    md: 'w-44 h-44 sm:w-52 sm:h-52',
-    lg: 'w-52 h-52 sm:w-60 sm:h-60 lg:w-64 lg:h-64',
-    xl: 'w-60 h-60 sm:w-68 sm:h-68 lg:w-76 lg:h-76',
+    compact: 'w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36',
+    md: 'w-40 h-40 sm:w-48 sm:h-48',
+    lg: 'w-48 h-48 sm:w-56 sm:h-56 lg:w-60 lg:h-60',
+    xl: 'w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72',
   }[size];
 
   const valueFontSize = {
-    compact: 'text-3xl xs:text-4xl sm:text-5xl',
-    md: 'text-4xl sm:text-5xl',
-    lg: 'text-5xl sm:text-6xl lg:text-7xl',
-    xl: 'text-6xl sm:text-7xl lg:text-8xl',
+    compact: 'text-2xl xs:text-3xl sm:text-4xl',
+    md: 'text-3xl sm:text-4xl',
+    lg: 'text-4xl sm:text-5xl lg:text-6xl',
+    xl: 'text-5xl sm:text-6xl lg:text-7xl',
   }[size];
 
-  const containerPadding = size === 'compact' ? 'p-2 sm:p-3' : 'p-3 sm:p-4';
+  const containerPadding = size === 'compact' ? 'p-1.5 sm:p-2' : 'p-3 sm:p-4';
 
   return (
-    <div className={`relative flex flex-col items-center justify-center ${containerPadding} rounded-2xl sm:rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-slate-700`}>
+    <div className={`relative flex flex-col items-center justify-center ${containerPadding} rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md backdrop-blur-md transition-all duration-300 hover:border-slate-700`}>
       {/* Header Label & Badge */}
-      <div className="w-full flex items-center justify-between px-2 mb-1 z-10">
-        <span className="text-xs font-black tracking-wider text-slate-400 uppercase">
+      <div className="w-full flex items-center justify-between px-1 mb-0.5 z-10">
+        <span className="text-[10px] sm:text-xs font-black tracking-wider text-slate-400 uppercase">
           {label}
         </span>
         {statusBadge && (
-          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border transition-colors ${statusBadgeClass}`}>
+          <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-full border transition-colors ${statusBadgeClass}`}>
             {statusBadge}
           </span>
         )}
@@ -150,26 +150,26 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
         </svg>
 
         {/* Center Digital Value & Unit */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-          <div className="flex items-baseline gap-1">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
+          <div className="flex items-baseline gap-0.5">
             <span
-              className={`font-black tracking-tight text-white ${valueFontSize} drop-shadow-md transition-colors duration-200`}
-              style={{ textShadow: `0 0 20px ${glowColor}` }}
+              className={`font-black tracking-tight text-white ${valueFontSize} drop-shadow-md transition-colors duration-200 leading-none`}
+              style={{ textShadow: `0 0 16px ${glowColor}` }}
             >
               {Math.round(currentValue)}
             </span>
-            <span className="text-sm sm:text-base font-bold text-slate-400">
+            <span className="text-xs sm:text-sm font-bold text-slate-400">
               {unit}
             </span>
           </div>
 
           {/* Target Delta or Sub-label */}
           {targetValue !== undefined && targetValue > 0 ? (
-            <div className="text-[11px] sm:text-xs font-semibold text-slate-400 mt-0.5">
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-400 mt-0.5 leading-none">
               Cible : <span className="font-bold text-slate-200">{targetValue} {unit}</span>
             </div>
           ) : subLabel ? (
-            <div className="text-[11px] sm:text-xs font-medium text-slate-400 mt-0.5">
+            <div className="text-[10px] sm:text-xs font-medium text-slate-400 mt-0.5 leading-none">
               {subLabel}
             </div>
           ) : null}
@@ -178,7 +178,7 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
       {/* Footer Zone Name */}
       {zoneName && (
-        <div className="mt-1 text-xs font-bold text-center transition-colors" style={{ color }}>
+        <div className="mt-0.5 text-[10px] sm:text-xs font-bold text-center transition-colors truncate max-w-full px-1" style={{ color }}>
           {zoneName}
         </div>
       )}

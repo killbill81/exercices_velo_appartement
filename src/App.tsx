@@ -114,7 +114,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white">
+    <div className="h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white overflow-hidden">
       {/* Header */}
       <Header
         activeTab={activeTab}
@@ -130,7 +130,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className={`flex-1 max-w-7xl w-full mx-auto ${
         activeTab === 'cockpit'
-          ? 'p-1.5 sm:p-4 pb-16 md:pb-4 overflow-hidden'
+          ? 'p-1 sm:p-2 overflow-hidden h-full'
           : 'p-3 sm:p-6 pb-24 md:pb-6 overflow-y-auto'
       }`}>
         {activeTab === 'cockpit' && (
