@@ -16,10 +16,10 @@ export const BLE_SERVICES = {
 };
 
 export const BLE_CHARACTERISTICS = {
-  INDOOR_BIKE_DATA: 0x2AD2,     // FTMS Indoor Bike Data
-  FITNESS_MACHINE_CONTROL_POINT: 0x2AD9, // FTMS Control Point (Résistance/Puissance cible)
+  INDOOR_BIKE_DATA: 0x2AD2,              // FTMS Indoor Bike Data
+  FITNESS_MACHINE_CONTROL_POINT: 0x2AD9,  // FTMS Control Point (Résistance/Puissance cible)
   FITNESS_MACHINE_STATUS: 0x2ADA,
-  HEART_RATE_MEASUREMENT: 0x2A37, // HR Measurement
+  HEART_RATE_MEASUREMENT: 0x2A37,        // HR Measurement
 };
 
 export type UnifiedStateListener = (state: UnifiedBikeState) => void;
@@ -30,21 +30,27 @@ class BluetoothManager {
   private bikeDevice: BluetoothDevice | null = null;
   private bikeControlChar: BluetoothRemoteGATTCharacteristic | null = null;
   private latestBikeMetrics: BikeMetrics | null = null;
+  private hasControl = false;
+  private currentTargetControlledWatts: number | null = null;
 
   // Périphérique Montre (Google Pixel Watch 4 / Ceinture cardio)
   private watchDevice: BluetoothDevice | null = null;
   private latestWatchHr: HeartRateData | null = null;
 
-  // État de connexion
+  // État de connexion & contrôle automatique
   private connectionState: BluetoothConnectionState = {
     bikeConnected: false,
     bikeConnecting: false,
     bikeError: null,
     bikeDeviceName: null,
+    bikeControlSupported: false,
+
     watchConnected: false,
     watchConnecting: false,
     watchError: null,
     watchDeviceName: null,
+
+    autoControlEnabled: true, // Activé par défaut pour piloter le vélo automatiquement
   };
 
   // Listeners
@@ -58,49 +64,52 @@ class BluetoothManager {
     return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
   }
 
-  public getConnectionState(): BluetoothConnectionState {
-    return { ...this.connectionState };
-  }
-
+  /**
+   * S'abonne aux changements d'état unifié (Watts, Cadence, Cardio unifié, etc.)
+   */
   public subscribeState(listener: UnifiedStateListener): () => void {
     this.stateListeners.add(listener);
-    // Émettre l'état actuel immédiatement
     listener(this.getUnifiedState());
     return () => this.stateListeners.delete(listener);
   }
 
+  /**
+   * S'abonne aux changements d'état de connexion Bluetooth
+   */
   public subscribeConnection(listener: ConnectionStateListener): () => void {
     this.connectionListeners.add(listener);
     listener(this.getConnectionState());
     return () => this.connectionListeners.delete(listener);
   }
 
-  private notifyConnectionChanged() {
-    const state = this.getConnectionState();
-    this.connectionListeners.forEach(fn => fn(state));
+  public getConnectionState(): BluetoothConnectionState {
+    return { ...this.connectionState };
   }
 
-  private notifyStateChanged() {
-    const unified = this.getUnifiedState();
-    this.stateListeners.forEach(fn => fn(unified));
+  public setAutoControlEnabled(enabled: boolean) {
+    this.connectionState.autoControlEnabled = enabled;
+    this.notifyConnectionChanged();
+    this.notifyStateChanged();
   }
 
   /**
-   * Calcule l'état agrégé avec priorisation du rythme cardiaque
+   * Retourne l'état consolidé en temps réel avec PRIORISATION cardio
    */
   public getUnifiedState(): UnifiedBikeState {
     const bike = this.latestBikeMetrics;
     const watch = this.latestWatchHr;
 
-    // Priorité 1: Montre Pixel Watch 4
+    // Priorisation Cardio :
+    // 1. Pixel Watch 4 en priorité (cardio continu au poignet)
+    // 2. Capteurs guidon du vélo Domyos en repli
+    // 3. Aucun capteur
     let hrBpm = 0;
-    let hrSource: UnifiedBikeState['heartRateSource'] = 'none';
+    let hrSource: 'watch' | 'bike' | 'none' = 'none';
 
-    if (this.connectionState.watchConnected && watch && watch.heartRateBpm > 0) {
+    if (watch && watch.heartRateBpm > 0) {
       hrBpm = watch.heartRateBpm;
       hrSource = 'watch';
     } else if (bike && bike.heartRateBpm && bike.heartRateBpm > 0) {
-      // Priorité 2 (Fallback): Capteurs du guidon du vélo Domyos
       hrBpm = bike.heartRateBpm;
       hrSource = 'bike';
     }
@@ -117,6 +126,9 @@ class BluetoothManager {
       heartRateSource: hrSource,
       isWatchConnected: this.connectionState.watchConnected,
       isBikeConnected: this.connectionState.bikeConnected,
+      isAutoControlSupported: this.connectionState.bikeControlSupported,
+      isAutoControlActive: this.connectionState.autoControlEnabled && (this.connectionState.bikeControlSupported || this.connectionState.bikeConnected),
+      targetControlledWatts: this.currentTargetControlledWatts,
       bikeDeviceName: this.connectionState.bikeDeviceName,
       watchDeviceName: this.connectionState.watchDeviceName,
     };
@@ -172,7 +184,7 @@ class BluetoothManager {
       // Obtenir la caractéristique Indoor Bike Data
       const bikeDataChar = await service.getCharacteristic(BLE_CHARACTERISTICS.INDOOR_BIKE_DATA);
 
-      // S'abonner aux notifications
+      // S'abonner aux notifications de télémétrie (Watts, Cadence, etc.)
       await bikeDataChar.startNotifications();
       bikeDataChar.addEventListener('characteristicvaluechanged', (event: Event) => {
         const target = event.target as unknown as { value: DataView };
@@ -182,11 +194,16 @@ class BluetoothManager {
         }
       });
 
-      // Tenter d'obtenir le point de contrôle (optionnel pour la résistance)
+      // Tenter d'obtenir la caractéristique FTMS Control Point (0x2AD9) pour piloter la résistance
       try {
         this.bikeControlChar = await service.getCharacteristic(BLE_CHARACTERISTICS.FITNESS_MACHINE_CONTROL_POINT);
-      } catch {
-        console.warn('Contrôle FTMS non disponible ou protégé');
+        this.connectionState.bikeControlSupported = true;
+        // Prendre la main sur la machine
+        await this.requestControl();
+      } catch (controlErr) {
+        console.warn('Contrôle FTMS Control Point non accessible ou non exposé:', controlErr);
+        this.bikeControlChar = null;
+        this.connectionState.bikeControlSupported = false;
       }
 
       this.connectionState.bikeConnected = true;
@@ -206,8 +223,103 @@ class BluetoothManager {
     }
   }
 
+  // ==========================================
+  // Pilotage Automatique FTMS (Résistance / ERG)
+  // ==========================================
+
+  /**
+   * Demande le contrôle de la console du vélo (Opcode 0x00)
+   */
+  public async requestControl(): Promise<boolean> {
+    if (!this.bikeControlChar) return false;
+    try {
+      const data = new Uint8Array([0x00]); // 0x00: Request Control
+      await this.bikeControlChar.writeValueWithResponse(data);
+      this.hasControl = true;
+      return true;
+    } catch (err) {
+      console.warn("Échec de la prise de contrôle FTMS (Request Control):", err);
+      return false;
+    }
+  }
+
+  /**
+   * Règle la puissance cible en Watts (Mode ERG - Opcode 0x05)
+   */
+  public async setTargetPower(targetWatts: number): Promise<boolean> {
+    this.currentTargetControlledWatts = Math.round(targetWatts);
+    this.notifyStateChanged();
+
+    if (!this.bikeControlChar || !this.connectionState.autoControlEnabled) {
+      return false;
+    }
+
+    try {
+      if (!this.hasControl) {
+        await this.requestControl();
+      }
+
+      // Opcode 0x05: Set Target Power (sint16 little endian)
+      const buffer = new ArrayBuffer(3);
+      const view = new DataView(buffer);
+      view.setUint8(0, 0x05);
+      view.setInt16(1, Math.max(20, Math.min(800, Math.round(targetWatts))), true);
+      
+      await this.bikeControlChar.writeValueWithResponse(buffer);
+      return true;
+    } catch (err) {
+      console.warn("Échec de l'envoi de consigne de puissance FTMS:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Règle le niveau de résistance direct (Niveau 1 à 15 - Opcode 0x04)
+   */
+  public async setTargetResistance(level: number): Promise<boolean> {
+    if (!this.bikeControlChar || !this.connectionState.autoControlEnabled) {
+      return false;
+    }
+
+    try {
+      if (!this.hasControl) {
+        await this.requestControl();
+      }
+
+      // Opcode 0x04: Set Target Resistance Level (uint8, échelle 1-15)
+      const buffer = new ArrayBuffer(2);
+      const view = new DataView(buffer);
+      view.setUint8(0, 0x04);
+      view.setUint8(1, Math.max(1, Math.min(15, Math.round(level))));
+      
+      await this.bikeControlChar.writeValueWithResponse(buffer);
+      return true;
+    } catch (err) {
+      console.warn("Échec de l'envoi du niveau de résistance FTMS:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Libère le contrôle de la console du vélo (Opcode 0x01: Reset)
+   */
+  public async resetControl(): Promise<void> {
+    this.currentTargetControlledWatts = null;
+    this.notifyStateChanged();
+
+    if (!this.bikeControlChar) return;
+    try {
+      const data = new Uint8Array([0x01]);
+      await this.bikeControlChar.writeValueWithResponse(data);
+      this.hasControl = false;
+    } catch {
+      // Ignorer
+    }
+  }
+
   public async disconnectBike(): Promise<void> {
     if (this.bikeDevice && this.bikeDevice.gatt?.connected) {
+      await this.resetControl();
       this.bikeDevice.gatt.disconnect();
     }
     this.handleBikeDisconnected();
@@ -216,7 +328,11 @@ class BluetoothManager {
   private handleBikeDisconnected() {
     this.connectionState.bikeConnected = false;
     this.connectionState.bikeConnecting = false;
+    this.connectionState.bikeControlSupported = false;
+    this.bikeControlChar = null;
+    this.hasControl = false;
     this.latestBikeMetrics = null;
+    this.currentTargetControlledWatts = null;
     this.notifyConnectionChanged();
     this.notifyStateChanged();
   }
@@ -264,7 +380,7 @@ class BluetoothManager {
       try {
         service = await server.getPrimaryService(BLE_SERVICES.HEART_RATE);
       } catch {
-        throw new Error("Le service Cardio (0x180D) n'est pas encore actif sur la montre. Activez la diffusion cardio sur votre Pixel Watch (ex: app 'Heart Rate to BLE' ou 'Heart for Bluetooth').");
+        throw new Error("Le service Cardio (0x180D) n'est pas encore actif sur la montre. Activez le partage cardio sur votre Pixel Watch (volet rapide ou paramètres Bluetooth).");
       }
       const hrChar = await service.getCharacteristic(BLE_CHARACTERISTICS.HEART_RATE_MEASUREMENT);
 
@@ -310,57 +426,45 @@ class BluetoothManager {
   }
 
   // ==========================================
-  // Envoi de Résistance Cible (si supporté par le modèle)
+  // Injection Données Simulées (Mode Démo)
   // ==========================================
 
-  public async setTargetResistance(level: number): Promise<boolean> {
-    if (!this.bikeControlChar || !this.connectionState.bikeConnected) {
-      return false;
+  public injectSimulatedMetrics(bike: Partial<BikeMetrics>, watchHrBpm: number | null) {
+    this.latestBikeMetrics = {
+      instantSpeedKmh: bike.instantSpeedKmh || 25,
+      instantCadenceRpm: bike.instantCadenceRpm || 80,
+      instantPowerWatts: bike.instantPowerWatts || 150,
+      totalDistanceMeters: (this.latestBikeMetrics?.totalDistanceMeters || 0) + ((bike.instantSpeedKmh || 25) / 3.6),
+      totalEnergyKcal: (this.latestBikeMetrics?.totalEnergyKcal || 0) + 0.15,
+      elapsedTimeSeconds: (this.latestBikeMetrics?.elapsedTimeSeconds || 0) + 1,
+      resistanceLevel: bike.resistanceLevel || 6,
+      heartRateBpm: bike.heartRateBpm,
+    };
+
+    if (watchHrBpm !== null) {
+      this.latestWatchHr = { heartRateBpm: watchHrBpm };
     }
-    try {
-      // FTMS OpCode 0x04: Set Target Resistance Level (unit 0.1)
-      const clamped = Math.max(1, Math.min(15, Math.round(level)));
-      const buffer = new Uint8Array([0x04, clamped * 10]);
-      await this.bikeControlChar.writeValueWithResponse(buffer);
-      return true;
-    } catch {
-      return false;
+
+    this.connectionState.bikeConnected = true;
+    this.connectionState.bikeDeviceName = 'Domyos EB900 B (Simulé)';
+    this.connectionState.bikeControlSupported = true;
+
+    if (watchHrBpm !== null) {
+      this.connectionState.watchConnected = true;
+      this.connectionState.watchDeviceName = 'Pixel Watch 4 (Simulé)';
     }
+
+    this.notifyStateChanged();
   }
 
-  /**
-   * Injection manuelle de métriques (utilisée par le simulateur / mode démo)
-   */
-  public injectSimulatedMetrics(bike: Partial<BikeMetrics> | null, watchHr: number | null) {
-    if (bike) {
-      this.latestBikeMetrics = {
-        instantSpeedKmh: bike.instantSpeedKmh ?? 25.0,
-        instantCadenceRpm: bike.instantCadenceRpm ?? 85,
-        instantPowerWatts: bike.instantPowerWatts ?? 150,
-        totalDistanceMeters: (this.latestBikeMetrics?.totalDistanceMeters ?? 0) + ((bike.instantSpeedKmh ?? 25) / 3.6),
-        totalEnergyKcal: (this.latestBikeMetrics?.totalEnergyKcal ?? 0) + 0.15,
-        elapsedTimeSeconds: (this.latestBikeMetrics?.elapsedTimeSeconds ?? 0) + 1,
-        resistanceLevel: bike.resistanceLevel ?? 6,
-        heartRateBpm: bike.heartRateBpm,
-      };
-      this.connectionState.bikeConnected = true;
-      this.connectionState.bikeDeviceName = 'Domyos EB900 B (Simulation)';
-    }
+  private notifyStateChanged() {
+    const state = this.getUnifiedState();
+    this.stateListeners.forEach(listener => listener(state));
+  }
 
-    if (watchHr !== null) {
-      this.latestWatchHr = {
-        heartRateBpm: watchHr,
-        contactDetected: true,
-      };
-      this.connectionState.watchConnected = true;
-      this.connectionState.watchDeviceName = 'Pixel Watch 4 (Simulation)';
-    } else if (watchHr === null && this.connectionState.watchDeviceName?.includes('Simulation')) {
-      this.latestWatchHr = null;
-      this.connectionState.watchConnected = false;
-    }
-
-    this.notifyConnectionChanged();
-    this.notifyStateChanged();
+  private notifyConnectionChanged() {
+    const state = this.getConnectionState();
+    this.connectionListeners.forEach(listener => listener(state));
   }
 }
 

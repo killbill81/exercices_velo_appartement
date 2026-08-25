@@ -38,6 +38,11 @@ export interface UnifiedBikeState {
   isWatchConnected: boolean;
   isBikeConnected: boolean;
   
+  // Pilotage automatique (FTMS Control Point / Mode ERG)
+  isAutoControlSupported: boolean;
+  isAutoControlActive: boolean;
+  targetControlledWatts: number | null;
+  
   // Noms d'appareils
   bikeDeviceName: string | null;
   watchDeviceName: string | null;
@@ -48,9 +53,12 @@ export interface BluetoothConnectionState {
   bikeConnecting: boolean;
   bikeError: string | null;
   bikeDeviceName: string | null;
+  bikeControlSupported: boolean;
 
   watchConnected: boolean;
   watchConnecting: boolean;
   watchError: string | null;
   watchDeviceName: string | null;
+
+  autoControlEnabled: boolean;
 }

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Gauge, Route, Flame, Clock, Sliders } from 'lucide-react';
+import { Gauge, Route, Flame, Clock, Sliders, Zap } from 'lucide-react';
 import { UnifiedBikeState } from '../../types/bluetooth';
 import { UserProfile } from '../../types/user';
 import { WorkoutEngineState } from '../../services/workout/workoutEngine';
+import { bluetoothManager } from '../../services/bluetooth/bluetoothManager';
 import { PowerZoneGauge } from './PowerZoneGauge';
 import { CadenceTargetGauge } from './CadenceTargetGauge';
 import { HeartRateBadge } from './HeartRateBadge';
@@ -71,6 +72,53 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
           </button>
         </div>
       )}
+
+      {/* 2. Auto-Pilot Vélo (Mode ERG) Status Banner */}
+      <div className={`p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+        bikeState.isAutoControlActive
+          ? 'bg-amber-500/10 border-amber-500/30 shadow-md shadow-amber-500/5'
+          : 'bg-slate-900/60 border-slate-800'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`p-2 rounded-xl shrink-0 ${
+            bikeState.isAutoControlActive
+              ? 'bg-amber-500/20 text-amber-400 animate-pulse'
+              : 'bg-slate-800 text-slate-500'
+          }`}>
+            <Zap className="w-4 h-4 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-extrabold text-white">
+                {bikeState.isAutoControlActive ? '⚡ Pilotage Automatique Vélo (Mode ERG)' : '✋ Pilotage Manuel de la Résistance'}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                bikeState.isAutoControlActive
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'bg-slate-800 text-slate-400'
+              }`}>
+                {bikeState.isAutoControlActive ? 'ACTIF' : 'MANUEL'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {bikeState.isAutoControlActive
+                ? `La résistance magnétique du Domyos EB900 B s'adapte automatiquement sur ${workoutState.targetWatts > 0 ? workoutState.targetWatts : userProfile.ftpWatts} W.`
+                : 'La résistance magnétique reste réglée manuellement depuis la console du vélo.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => bluetoothManager.setAutoControlEnabled(!bikeState.isAutoControlActive)}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+            bikeState.isAutoControlActive
+              ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+          }`}
+        >
+          {bikeState.isAutoControlActive ? 'Passer en Manuel' : 'Activer Auto-Pilot'}
+        </button>
+      </div>
 
       {/* 2. Main Dual Gauges (Power Watts & Cadence RPM) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

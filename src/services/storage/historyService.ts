@@ -11,6 +11,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   soundAlertsEnabled: true,
   voiceCoachEnabled: true,
   screenWakeLockEnabled: true,
+  autoBikeControlEnabled: true,
   updatedAt: new Date().toISOString(),
 };
 

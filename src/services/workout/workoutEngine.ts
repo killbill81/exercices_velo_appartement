@@ -136,6 +136,7 @@ class WorkoutEngine {
     const currentStep = this.scaledWorkout.scaledSteps[this.currentStepIndex] || this.scaledWorkout.scaledSteps[0];
     if (currentStep) {
       speechCoach.announceStep(currentStep.name, Math.round(currentStep.targetWatts * this.intensityMultiplier), currentStep.durationSeconds);
+      bluetoothManager.setTargetPower(Math.round(currentStep.targetWatts * this.intensityMultiplier));
     }
 
     this.startTimer();
@@ -153,6 +154,12 @@ class WorkoutEngine {
     if (this.status !== 'paused') return;
     this.status = 'running';
     screenWakeLockService.requestWakeLock();
+    if (this.scaledWorkout) {
+      const currentStep = this.scaledWorkout.scaledSteps[this.currentStepIndex];
+      if (currentStep) {
+        bluetoothManager.setTargetPower(Math.round(currentStep.targetWatts * this.intensityMultiplier));
+      }
+    }
     this.startTimer();
     this.notifyState();
   }
@@ -165,6 +172,7 @@ class WorkoutEngine {
       const nextStep = this.scaledWorkout.scaledSteps[this.currentStepIndex];
       soundPlayer.playStartBeep();
       speechCoach.announceStep(nextStep.name, Math.round(nextStep.targetWatts * this.intensityMultiplier), nextStep.durationSeconds);
+      bluetoothManager.setTargetPower(Math.round(nextStep.targetWatts * this.intensityMultiplier));
       this.notifyState();
     } else {
       this.finish();
@@ -176,18 +184,27 @@ class WorkoutEngine {
     if (this.currentStepIndex > 0) {
       this.currentStepIndex -= 1;
       this.stepElapsedSeconds = 0;
+      const prevStep = this.scaledWorkout.scaledSteps[this.currentStepIndex];
+      bluetoothManager.setTargetPower(Math.round(prevStep.targetWatts * this.intensityMultiplier));
       this.notifyState();
     }
   }
 
   public adjustIntensity(deltaMultiplier: number) {
     this.intensityMultiplier = Math.max(0.5, Math.min(1.5, Number((this.intensityMultiplier + deltaMultiplier).toFixed(2))));
+    if (this.scaledWorkout && (this.status === 'running' || this.status === 'paused')) {
+      const currentStep = this.scaledWorkout.scaledSteps[this.currentStepIndex];
+      if (currentStep) {
+        bluetoothManager.setTargetPower(Math.round(currentStep.targetWatts * this.intensityMultiplier));
+      }
+    }
     this.notifyState();
   }
 
   public stop() {
     this.stopTimer();
     screenWakeLockService.releaseWakeLock();
+    bluetoothManager.resetControl();
     this.status = 'idle';
     this.currentStepIndex = 0;
     this.stepElapsedSeconds = 0;
@@ -254,6 +271,7 @@ class WorkoutEngine {
         const nextStep = this.scaledWorkout.scaledSteps[this.currentStepIndex];
         soundPlayer.playStartBeep();
         speechCoach.announceStep(nextStep.name, Math.round(nextStep.targetWatts * this.intensityMultiplier), nextStep.durationSeconds);
+        bluetoothManager.setTargetPower(Math.round(nextStep.targetWatts * this.intensityMultiplier));
       } else {
         this.finish();
         return;
@@ -271,6 +289,7 @@ class WorkoutEngine {
     this.stopTimer();
     this.status = 'finished';
     screenWakeLockService.releaseWakeLock();
+    bluetoothManager.resetControl();
     soundPlayer.playFinishFanfare();
     speechCoach.announceFinish();
 

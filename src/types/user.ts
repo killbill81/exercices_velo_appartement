@@ -35,6 +35,7 @@ export interface UserProfile {
   soundAlertsEnabled: boolean;
   voiceCoachEnabled: boolean;
   screenWakeLockEnabled: boolean;
+  autoBikeControlEnabled: boolean;
   updatedAt: string;
 }
 

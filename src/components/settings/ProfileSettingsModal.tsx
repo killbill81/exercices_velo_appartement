@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, X, Volume2, Mic, Smartphone, Check, Save } from 'lucide-react';
+import { User, X, Volume2, Mic, Smartphone, Check, Save, Zap } from 'lucide-react';
 import { UserProfile } from '../../types/user';
 import { historyService } from '../../services/storage/historyService';
 import { soundPlayer } from '../../services/audio/soundPlayer';
@@ -24,6 +24,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [soundAlerts, setSoundAlerts] = useState(userProfile.soundAlertsEnabled);
   const [voiceCoach, setVoiceCoach] = useState(userProfile.voiceCoachEnabled);
   const [wakeLock, setWakeLock] = useState(userProfile.screenWakeLockEnabled);
+  const [autoBikeControl, setAutoBikeControl] = useState(userProfile.autoBikeControlEnabled ?? true);
   const [saved, setSaved] = useState(false);
 
   if (!isOpen) return null;
@@ -36,6 +37,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       soundAlertsEnabled: soundAlerts,
       voiceCoachEnabled: voiceCoach,
       screenWakeLockEnabled: wakeLock,
+      autoBikeControlEnabled: autoBikeControl,
     });
 
     soundPlayer.setMuted(!soundAlerts);
@@ -159,7 +161,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               />
             </label>
 
-            {/* Screen Wake Lock */}
+            {/* Maintien de l'écran allumé */}
             <label className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer">
               <div className="flex items-center gap-2.5">
                 <Smartphone className="w-4 h-4 text-emerald-400" />
@@ -172,6 +174,23 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 type="checkbox"
                 checked={wakeLock}
                 onChange={(e) => setWakeLock(e.target.checked)}
+                className="w-4 h-4 accent-cyan-500 rounded"
+              />
+            </label>
+
+            {/* Pilotage Automatique Vélo */}
+            <label className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <div className="flex items-center gap-2.5">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <div>
+                  <div className="text-xs font-bold text-white">Pilotage automatique du vélo (Mode ERG)</div>
+                  <div className="text-[10px] text-slate-400">Ajuste la résistance motorisée du Domyos EB900 B selon le programme</div>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={autoBikeControl}
+                onChange={(e) => setAutoBikeControl(e.target.checked)}
                 className="w-4 h-4 accent-cyan-500 rounded"
               />
             </label>
