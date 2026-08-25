@@ -8,8 +8,8 @@
 
 **Purpose**: Configuration des utilitaires graphiques et dépendances UI
 
-- [ ] T001 [P] Create full-screen utility helpers in src/utils/fullscreen.ts
-- [ ] T002 [P] Define UI view contracts and zone color theme helpers in src/types/uiTheme.ts
+- [X] T001 [P] Create full-screen utility helpers in src/utils/fullscreen.ts
+- [X] T002 [P] Define UI view contracts and zone color theme helpers in src/types/uiTheme.ts
 
 ---
 
@@ -17,10 +17,10 @@
 
 **Purpose**: Préréquis d'affichage et composants graphiques de base
 
-- [ ] T003 [P] Implement Neon SVG circular arc component with Coggan zone glowing halos in src/components/cockpit/NeonArcGauge.tsx
-- [ ] T004 [P] Implement unit tests for NeonArcGauge and zone calculations in src/components/cockpit/__tests__/NeonArcGauge.test.tsx
-- [ ] T005 [P] Implement Visual Pulse Overlay component with dynamic zone glow in src/components/cockpit/VisualPulseOverlay.tsx
-- [ ] T006 Add Fullscreen toggle action and state management in src/components/common/Header.tsx
+- [X] T003 [P] Implement Neon SVG circular arc component with Coggan zone glowing halos in src/components/cockpit/NeonArcGauge.tsx
+- [X] T004 [P] Implement unit tests for NeonArcGauge and zone calculations in src/components/cockpit/__tests__/NeonArcGauge.test.tsx
+- [X] T005 [P] Implement Visual Pulse Overlay component with dynamic zone glow in src/components/cockpit/VisualPulseOverlay.tsx
+- [X] T006 Add Fullscreen toggle action and state management in src/components/common/Header.tsx
 
 **Checkpoint**: Composants visuels de base prêts et testés.
 
@@ -33,12 +33,12 @@
 **Independent Test**: Ouvrir l'application en mode paysage, vérifier que les jauges néon de Watts et Cadence s'affichent à gauche en XXL et la timeline à droite sans aucun défilement.
 
 ### Tests for User Story 1
-- [ ] T007 [P] [US1] Unit test for landscape layout mode switch and gauge responsiveness in src/components/cockpit/__tests__/LiveCockpitLandscape.test.tsx
+- [X] T007 [P] [US1] Unit test for landscape layout mode switch and gauge responsiveness in src/components/cockpit/__tests__/LiveCockpitLandscape.test.tsx
 
 ### Implementation for User Story 1
-- [ ] T008 [US1] Integrate NeonArcGauge into PowerZoneGauge.tsx and CadenceTargetGauge.tsx in src/components/cockpit/
-- [ ] T009 [US1] Refactor LiveCockpit.tsx to support responsive Landscape Dual-Column layout (Left: Dials, Right: Timeline & Secondary Cards) in src/components/cockpit/LiveCockpit.tsx
-- [ ] T010 [US1] Optimize IntervalTimeline.tsx for horizontal panoramic view in src/components/cockpit/IntervalTimeline.tsx
+- [X] T008 [US1] Integrate NeonArcGauge into PowerZoneGauge.tsx and CadenceTargetGauge.tsx in src/components/cockpit/
+- [X] T009 [US1] Refactor LiveCockpit.tsx to support responsive Landscape Dual-Column layout (Left: Dials, Right: Timeline & Secondary Cards) in src/components/cockpit/LiveCockpit.tsx
+- [X] T010 [US1] Optimize IntervalTimeline.tsx for horizontal panoramic view in src/components/cockpit/IntervalTimeline.tsx
 
 **Checkpoint**: Le Cockpit Paysage Plein Écran (MVP) est 100% fonctionnel et lisible à 1 mètre.
 
@@ -51,8 +51,8 @@
 **Independent Test**: Lancer un entraînement, vérifier le déclenchement du halo visuel lumineux synchronisé avec les 3 derniers bips avant le changement de palier.
 
 ### Implementation for User Story 2
-- [ ] T011 [US2] Connect workoutEngine transition countdown state to VisualPulseOverlay in src/components/cockpit/LiveCockpit.tsx
-- [ ] T012 [US2] Enhance visual step transition animations in src/components/cockpit/IntervalTimeline.tsx
+- [X] T011 [US2] Connect workoutEngine transition countdown state to VisualPulseOverlay in src/components/cockpit/LiveCockpit.tsx
+- [X] T012 [US2] Enhance visual step transition animations in src/components/cockpit/IntervalTimeline.tsx
 
 **Checkpoint**: Les transitions d'intervalles sont dynamisées visuellement par pulsations sans vibration mécanique.
 
@@ -65,9 +65,9 @@
 **Independent Test**: Toucher les boutons $\pm 5\%$ sur le flanc gauche et le bouton pause sur le flanc droit en mode paysage sans lâcher les poignées.
 
 ### Implementation for User Story 3
-- [ ] T013 [P] [US3] Implement thumb-friendly lateral control zone component in src/components/cockpit/LateralControls.tsx
-- [ ] T014 [US3] Update speechCoach.ts to deliver concise audio announcements (Bloc + Watts + Durée) in src/services/audio/speechCoach.ts
-- [ ] T015 [US3] Integrate LateralControls into LiveCockpit.tsx in src/components/cockpit/LiveCockpit.tsx
+- [X] T013 [P] [US3] Implement thumb-friendly lateral control zone component in src/components/cockpit/LateralControls.tsx
+- [X] T014 [US3] Update speechCoach.ts to deliver concise audio announcements (Bloc + Watts + Durée) in src/services/audio/speechCoach.ts
+- [X] T015 [US3] Integrate LateralControls into LiveCockpit.tsx in src/components/cockpit/LiveCockpit.tsx
 
 **Checkpoint**: Pilotage tactile instantané au pouce et annonces vocales percutantes.
 
@@ -77,9 +77,9 @@
 
 **Purpose**: Validation globale, couverture de tests et compilation
 
-- [ ] T016 [P] Run and verify full Vitest test suite (`npm test`)
-- [ ] T017 [P] Execute production build (`npm run build`)
-- [ ] T018 Execute end-to-end quickstart validation per quickstart.md
+- [X] T016 [P] Run and verify full Vitest test suite (`npm test`)
+- [X] T017 [P] Execute production build (`npm run build`)
+- [X] T018 Execute end-to-end quickstart validation per quickstart.md
 
 ---
 

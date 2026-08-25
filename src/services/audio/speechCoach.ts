@@ -46,7 +46,7 @@ class SpeechCoach {
     if (min > 0) durationText += `${min} minute${min > 1 ? 's' : ''} `;
     if (sec > 0) durationText += `${sec} seconde${sec > 1 ? 's' : ''}`;
 
-    const text = `${stepName}. Objectif ${targetWatts} watts pendant ${durationText}.`;
+    const text = `${stepName}, ${targetWatts} Watts, ${durationText.trim()}.`;
     this.speak(text, true);
   }
 

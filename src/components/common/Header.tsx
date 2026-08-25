@@ -1,7 +1,8 @@
-import React from 'react';
-import { Bluetooth, Watch, User, Activity, PlayCircle, History, Sparkles, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bluetooth, Watch, User, Activity, PlayCircle, History, Sparkles, Zap, Maximize2, Minimize2 } from 'lucide-react';
 import { BluetoothConnectionState } from '../../types/bluetooth';
 import { UserProfile } from '../../types/user';
+import { toggleFullscreen, isFullscreen, subscribeFullscreenChange } from '../../utils/fullscreen';
 
 interface HeaderProps {
   activeTab: 'cockpit' | 'plans' | 'ramp' | 'history';
@@ -24,6 +25,15 @@ export const Header: React.FC<HeaderProps> = ({
   isSimulating,
   onToggleSimulation,
 }) => {
+  const [fullscreenActive, setFullscreenActive] = useState<boolean>(isFullscreen());
+
+  useEffect(() => {
+    const unsubscribe = subscribeFullscreenChange((fs) => {
+      setFullscreenActive(fs);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-3 py-2 sm:px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
@@ -91,6 +101,19 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Boutons d'Action Droite (TOUJOURS VISIBLES SUR SMARTPHONE) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Bouton Plein Écran */}
+          <button
+            onClick={() => toggleFullscreen()}
+            title={fullscreenActive ? "Quitter le plein écran" : "Passer en plein écran immersif"}
+            className="flex items-center justify-center p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-300 transition-all active:scale-95 shadow-sm"
+          >
+            {fullscreenActive ? (
+              <Minimize2 className="w-3.5 h-3.5 text-cyan-400" />
+            ) : (
+              <Maximize2 className="w-3.5 h-3.5 text-slate-300" />
+            )}
+          </button>
+
           {/* Bouton Simulation / Démo */}
           <button
             onClick={onToggleSimulation}

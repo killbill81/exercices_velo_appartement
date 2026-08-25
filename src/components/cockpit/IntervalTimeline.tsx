@@ -51,10 +51,14 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
         {/* Step Countdown Timer */}
         <div className="text-right">
           <div className="flex items-center justify-end gap-1.5 text-xs text-slate-400 font-medium">
-            <Timer className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Fin du bloc dans</span>
+            <Timer className={`w-3.5 h-3.5 ${stepRemainingSeconds <= 3 ? 'text-amber-400 animate-spin' : 'text-cyan-400'}`} />
+            <span className={stepRemainingSeconds <= 3 ? 'text-amber-300 font-bold' : ''}>
+              {stepRemainingSeconds <= 3 ? 'Changement imminent !' : 'Fin du bloc dans'}
+            </span>
           </div>
-          <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white mt-0.5">
+          <div className={`text-3xl sm:text-4xl font-black font-mono tracking-tight mt-0.5 transition-all ${
+            stepRemainingSeconds <= 3 ? 'text-amber-400 scale-105 animate-pulse' : 'text-white'
+          }`}>
             {formatTime(stepRemainingSeconds)}
           </div>
         </div>
