@@ -179,7 +179,10 @@ export default function App() {
       <SessionSummaryModal
         session={summarySession}
         isOpen={Boolean(summarySession)}
-        onClose={() => setSummarySession(null)}
+        onClose={() => {
+          setSummarySession(null);
+          workoutEngine.stop();
+        }}
         userFtpWatts={userProfile.ftpWatts}
       />
     </div>

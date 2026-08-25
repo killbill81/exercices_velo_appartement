@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, Plus, Minus, Square } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Plus, Minus, Square, RotateCcw } from 'lucide-react';
 import { WorkoutStatus } from '../../types/workout';
 
 interface WorkoutControlsProps {
@@ -27,6 +27,7 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
 }) => {
   const isRunning = status === 'running';
   const isPaused = status === 'paused';
+  const isFinished = status === 'finished';
   const isIdle = status === 'idle';
 
   return (
@@ -35,8 +36,9 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
       <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
         <button
           onClick={() => onAdjustIntensity(-0.05)}
+          disabled={isFinished}
           title="Réduire l'intensité de 5%"
-          className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center font-bold transition-all"
+          className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center font-bold transition-all disabled:opacity-40"
         >
           <Minus className="w-4 h-4" />
         </button>
@@ -50,8 +52,9 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
 
         <button
           onClick={() => onAdjustIntensity(0.05)}
+          disabled={isFinished}
           title="Augmenter l'intensité de 5%"
-          className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center font-bold transition-all"
+          className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center font-bold transition-all disabled:opacity-40"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -62,7 +65,7 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
         {/* Previous Step */}
         <button
           onClick={onPrevious}
-          disabled={isIdle}
+          disabled={isIdle || isFinished}
           title="Bloc précédent"
           className="w-11 h-11 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none"
         >
@@ -77,6 +80,16 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
           >
             <Play className="w-6 h-6 fill-current" />
             DÉMARRER LA SÉANCE
+          </button>
+        )}
+
+        {isFinished && (
+          <button
+            onClick={onStart}
+            className="px-6 h-14 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm sm:text-base flex items-center gap-2.5 shadow-lg shadow-cyan-500/25 active:scale-95 transition-all"
+          >
+            <RotateCcw className="w-5 h-5" />
+            RECOMMENCER LA SÉANCE
           </button>
         )}
 
@@ -103,7 +116,7 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
         {/* Skip Step */}
         <button
           onClick={onSkip}
-          disabled={isIdle}
+          disabled={isIdle || isFinished}
           title="Passer au bloc suivant"
           className="w-11 h-11 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 flex items-center justify-center transition-all disabled:opacity-40 disabled:pointer-events-none"
         >
@@ -111,8 +124,8 @@ export const WorkoutControls: React.FC<WorkoutControlsProps> = ({
         </button>
       </div>
 
-      {/* Stop Button */}
-      {!isIdle && (
+      {/* Stop Button (visible uniquement quand la séance est active ou en pause) */}
+      {(isRunning || isPaused) && (
         <button
           onClick={onStop}
           title="Arrêter et terminer la séance"

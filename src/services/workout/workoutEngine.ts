@@ -118,15 +118,24 @@ class WorkoutEngine {
    */
   public start() {
     if (!this.scaledWorkout) return;
+    
+    // Si la séance précédente était terminée, réinitialiser à zéro
+    if (this.status === 'finished') {
+      this.currentStepIndex = 0;
+      this.stepElapsedSeconds = 0;
+      this.totalElapsedSeconds = 0;
+      this.samples = [];
+    }
+
     this.status = 'running';
     this.startedAtIso = new Date().toISOString();
     
     screenWakeLockService.requestWakeLock();
     soundPlayer.playStartBeep();
     
-    const firstStep = this.scaledWorkout.scaledSteps[0];
-    if (firstStep) {
-      speechCoach.announceStep(firstStep.name, firstStep.targetWatts, firstStep.durationSeconds);
+    const currentStep = this.scaledWorkout.scaledSteps[this.currentStepIndex] || this.scaledWorkout.scaledSteps[0];
+    if (currentStep) {
+      speechCoach.announceStep(currentStep.name, Math.round(currentStep.targetWatts * this.intensityMultiplier), currentStep.durationSeconds);
     }
 
     this.startTimer();
@@ -258,13 +267,12 @@ class WorkoutEngine {
    * Clôture de la séance et calcul du bilan
    */
   public finish() {
+    if (this.status === 'finished' || !this.scaledWorkout) return;
     this.stopTimer();
     this.status = 'finished';
     screenWakeLockService.releaseWakeLock();
     soundPlayer.playFinishFanfare();
     speechCoach.announceFinish();
-
-    if (!this.scaledWorkout) return;
 
     const completedAtIso = new Date().toISOString();
     const ftp = this.scaledWorkout.ftpWatts;

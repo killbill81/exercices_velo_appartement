@@ -46,16 +46,34 @@ describe('Workout Engine State Machine', () => {
   });
 
   it('should finish workout after all steps complete', () => {
-    let finishedCalled = false;
+    let finishedCalled = 0;
     workoutEngine.loadWorkout(sampleWorkout, 200);
     workoutEngine.onFinish(() => {
-      finishedCalled = true;
+      finishedCalled += 1;
     });
     workoutEngine.start();
 
     // Avancer de 4 secondes
     vi.advanceTimersByTime(4000);
     expect(workoutEngine.getState().status).toBe('finished');
-    expect(finishedCalled).toBe(true);
+    expect(finishedCalled).toBe(1);
+
+    // Vérifier que rappeler finish() ne relance pas d'événement en boucle
+    workoutEngine.finish();
+    expect(finishedCalled).toBe(1);
+  });
+
+  it('should cleanly restart workout from step 0 after being finished', () => {
+    workoutEngine.loadWorkout(sampleWorkout, 200);
+    workoutEngine.start();
+    vi.advanceTimersByTime(4000);
+    expect(workoutEngine.getState().status).toBe('finished');
+
+    // Redémarrage
+    workoutEngine.start();
+    const state = workoutEngine.getState();
+    expect(state.status).toBe('running');
+    expect(state.currentStepIndex).toBe(0);
+    expect(state.stepElapsedSeconds).toBe(0);
   });
 });
