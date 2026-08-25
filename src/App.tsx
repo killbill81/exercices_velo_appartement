@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/common/Header';
+import { BottomNav } from './components/common/BottomNav';
 import { LiveCockpit } from './components/cockpit/LiveCockpit';
 import { PlanSelector } from './components/plans/PlanSelector';
 import { RampTestRunner } from './components/ftp/RampTestRunner';
@@ -113,7 +114,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 pb-24 md:pb-6">
         {activeTab === 'cockpit' && (
           <LiveCockpit
             bikeState={bikeState}
@@ -150,6 +151,12 @@ export default function App() {
           <HistoryDashboard userFtpWatts={userProfile.ftpWatts} />
         )}
       </main>
+
+      {/* Bottom Navigation for Mobile (Pixel 10) */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {/* Bluetooth Connection Modal */}
       <ConnectionModal
