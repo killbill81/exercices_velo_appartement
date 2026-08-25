@@ -34,6 +34,15 @@ export default function App() {
   const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
+    // 0. Déverrouiller l'orientation d'écran pour PWA installée (autoriser paysage et portrait)
+    try {
+      if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'unlock' in window.screen.orientation) {
+        (window.screen.orientation as unknown as { unlock: () => Promise<void> }).unlock().catch(() => {});
+      }
+    } catch {
+      // Ignorer si non supporté
+    }
+
     // 1. Charger le profil utilisateur
     historyService.getUserProfile().then((profile) => {
       setUserProfile(profile);
