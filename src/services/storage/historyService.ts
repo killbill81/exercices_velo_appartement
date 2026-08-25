@@ -58,6 +58,20 @@ class HistoryService {
   }
 
   /**
+   * Supprime une séance terminée par son identifiant unique
+   */
+  public async deleteSession(sessionId: string): Promise<void> {
+    await db.completedSessions.where('sessionId').equals(sessionId).delete();
+  }
+
+  /**
+   * Supprime toutes les séances de l'historique
+   */
+  public async clearAllSessions(): Promise<void> {
+    await db.completedSessions.clear();
+  }
+
+  /**
    * Enregistre un nouveau test FTP et met à jour le profil
    */
   public async saveFtpTestResult(

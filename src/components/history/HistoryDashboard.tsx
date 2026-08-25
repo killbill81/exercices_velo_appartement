@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { History, Calendar, Trophy, Download, Eye } from 'lucide-react';
+import { History, Calendar, Trophy, Download, Eye, Trash2, AlertTriangle } from 'lucide-react';
 import { CompletedSession, FtpTestHistoryItem } from '../../types/user';
 import { historyService } from '../../services/storage/historyService';
 import { SessionSummaryModal } from '../summary/SessionSummaryModal';
@@ -18,6 +18,7 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
   const [sessions, setSessions] = useState<CompletedSession[]>([]);
   const [ftpHistory, setFtpHistory] = useState<FtpTestHistoryItem[]>([]);
   const [selectedSession, setSelectedSession] = useState<CompletedSession | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<CompletedSession | null>(null);
 
   useEffect(() => {
     loadData();
@@ -28,6 +29,13 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
     const f = await historyService.getFtpHistory();
     setSessions(s);
     setFtpHistory(f);
+  };
+
+  const confirmDelete = async () => {
+    if (!sessionToDelete) return;
+    await historyService.deleteSession(sessionToDelete.sessionId);
+    setSessionToDelete(null);
+    await loadData();
   };
 
   const totalDistanceKm = sessions.reduce((acc, s) => acc + s.totalDistanceKm, 0);
@@ -105,10 +113,17 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
 
       {/* Past Sessions List */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-        <h2 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-cyan-400" />
-          Détail des Séances
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-cyan-400" />
+            Détail des Séances ({sessions.length})
+          </h2>
+          {sessions.length > 0 && (
+            <span className="text-xs text-slate-500 font-medium">
+              Gérer ou supprimer à l'unité
+            </span>
+          )}
+        </div>
 
         {sessions.length === 0 ? (
           <div className="py-12 text-center text-slate-500">
@@ -158,20 +173,30 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
                     </div>
                   )}
 
+                  {/* Action Buttons: View, Download TCX, Delete */}
                   <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
                     <button
                       onClick={() => setSelectedSession(session)}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all active:scale-95"
                       title="Voir les détails"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
+
                     <button
                       onClick={() => historyService.downloadTcx(session)}
-                      className="p-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 transition-all"
+                      className="p-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 transition-all active:scale-95"
                       title="Exporter en TCX (Strava)"
                     >
                       <Download className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => setSessionToDelete(session)}
+                      className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all border border-rose-500/20 active:scale-95"
+                      title="Supprimer cette séance"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -180,6 +205,39 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal for Deletion */}
+      {sessionToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="font-extrabold text-base text-white">Supprimer cette séance ?</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Voulez-vous vraiment supprimer la séance <strong className="text-white">"{sessionToDelete.workoutTitle}"</strong> du {new Date(sessionToDelete.startedAt).toLocaleDateString('fr-FR')} ? Cette action est irréversible.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setSessionToDelete(null)}
+                className="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/30 active:scale-95"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       <SessionSummaryModal
