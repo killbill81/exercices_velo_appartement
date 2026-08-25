@@ -23,4 +23,4 @@
 
 - [X] T006 [P] Run and verify full Vitest test suite (`npm test`)
 - [X] T007 [P] Execute production build (`npm run build`)
-- [ ] T008 Deploy and push to GitHub
+- [X] T008 Deploy and push to GitHub
