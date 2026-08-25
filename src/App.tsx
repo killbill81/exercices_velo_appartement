@@ -34,10 +34,15 @@ export default function App() {
   const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
-    // 0. Déverrouiller l'orientation d'écran pour PWA installée (autoriser paysage et portrait)
+    // 0. Forcer l'orientation en mode Paysage pour l'application installée (compteur vélo)
     try {
-      if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'unlock' in window.screen.orientation) {
-        (window.screen.orientation as unknown as { unlock: () => Promise<void> }).unlock().catch(() => {});
+      if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'lock' in window.screen.orientation) {
+        (window.screen.orientation as unknown as { lock: (orientation: string) => Promise<void> }).lock('landscape').catch(() => {
+          // Si lock n'est pas autorisé par l'environnement (ex: hors plein écran), tenter unlock
+          if ('unlock' in window.screen.orientation) {
+            (window.screen.orientation as unknown as { unlock: () => Promise<void> }).unlock().catch(() => {});
+          }
+        });
       }
     } catch {
       // Ignorer si non supporté
