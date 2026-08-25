@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bluetooth, Watch, User, Activity, PlayCircle, History, Sparkles, Zap, Maximize2, Minimize2 } from 'lucide-react';
+import { Bluetooth, Watch, User, Activity, PlayCircle, History, Sparkles, Zap, Maximize2, Minimize2, RotateCw } from 'lucide-react';
 import { BluetoothConnectionState } from '../../types/bluetooth';
 import { UserProfile } from '../../types/user';
 import { toggleFullscreen, isFullscreen, subscribeFullscreenChange } from '../../utils/fullscreen';
@@ -13,6 +13,8 @@ interface HeaderProps {
   onOpenProfileModal: () => void;
   isSimulating: boolean;
   onToggleSimulation: () => void;
+  isForceLandscape: boolean;
+  onToggleForceLandscape: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,6 +26,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfileModal,
   isSimulating,
   onToggleSimulation,
+  isForceLandscape,
+  onToggleForceLandscape,
 }) => {
   const [fullscreenActive, setFullscreenActive] = useState<boolean>(isFullscreen());
 
@@ -101,6 +105,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Boutons d'Action Droite (TOUJOURS VISIBLES SUR SMARTPHONE) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Bouton Forcer Rotation 90° Paysage (Compteur Vélo) */}
+          <button
+            onClick={onToggleForceLandscape}
+            title={isForceLandscape ? "Désactiver la rotation 90° forcée" : "Forcer le mode paysage horizontal 90° (Compteur de guidon)"}
+            className={`flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-sm ${
+              isForceLandscape
+                ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-cyan-500/20'
+                : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700/80 text-slate-300'
+            }`}
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${isForceLandscape ? 'rotate-90 text-slate-950' : 'text-slate-400'}`} />
+            <span className="hidden sm:inline text-[11px]">90°</span>
+          </button>
+
           {/* Bouton Plein Écran */}
           <button
             onClick={() => toggleFullscreen()}

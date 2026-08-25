@@ -33,6 +33,25 @@ export default function App() {
   // Simulation mode
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Forced 90deg landscape mode
+  const [isForceLandscape, setIsForceLandscape] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('velo_force_landscape') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleForceLandscape = () => {
+    setIsForceLandscape((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('velo_force_landscape', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   useEffect(() => {
     // 0. Forcer l'orientation en mode Paysage pour l'application installée (compteur vélo)
     try {
@@ -114,7 +133,9 @@ export default function App() {
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white overflow-hidden">
+    <div className={`h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white overflow-hidden ${
+      isForceLandscape ? 'forced-landscape-mode' : ''
+    }`}>
       {/* Header */}
       <Header
         activeTab={activeTab}
@@ -125,6 +146,8 @@ export default function App() {
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         isSimulating={isSimulating}
         onToggleSimulation={handleToggleSimulation}
+        isForceLandscape={isForceLandscape}
+        onToggleForceLandscape={handleToggleForceLandscape}
       />
 
       {/* Main Content Area */}

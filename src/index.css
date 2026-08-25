@@ -24,3 +24,19 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Forced 90deg Landscape on Mobile Portrait */
+@media (orientation: portrait) {
+  .forced-landscape-mode {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vh !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    height: 100dvw !important;
+    transform: rotate(90deg) translateY(-100%) !important;
+    transform-origin: top left !important;
+    overflow: hidden !important;
+  }
+}
