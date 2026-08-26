@@ -92,7 +92,7 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
   return (
     <div
       style={cardStyle}
-      className={`relative flex flex-col justify-between items-center p-2.5 sm:p-3.5 rounded-3xl bg-slate-900/95 border shadow-xl backdrop-blur-md transition-all duration-300 ${className}`}
+      className={`relative flex flex-col justify-between items-center p-2 sm:p-2.5 rounded-2xl bg-slate-900/95 border shadow-xl backdrop-blur-md transition-all duration-300 ${className}`}
     >
       {/* Header Label & Badge */}
       <div className="w-full flex items-center justify-between px-1 z-10">

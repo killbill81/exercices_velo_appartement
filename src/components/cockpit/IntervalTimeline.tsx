@@ -30,21 +30,21 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
   const totalDuration = workout.totalDurationSeconds || 1;
 
   return (
-    <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-2.5 sm:p-3.5 shadow-lg backdrop-blur-md space-y-1.5">
+    <div className="bg-slate-900/95 border border-slate-800 rounded-xl p-1.5 sm:p-2.5 shadow-lg backdrop-blur-md space-y-1">
       {/* Row 1: Step Info & Large Countdown */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 overflow-hidden">
+        <div className="flex items-center gap-1.5 overflow-hidden">
           <span
-            className="w-2.5 h-2.5 rounded-full shrink-0 animate-ping"
+            className="w-2 h-2 rounded-full shrink-0 animate-ping"
             style={{ backgroundColor: currentStep.powerZone.color }}
           />
           <div className="truncate">
             <div className="flex items-center gap-1.5 truncate">
-              <span className="font-extrabold text-xs sm:text-sm text-white truncate">
+              <span className="font-extrabold text-xs text-white truncate">
                 {currentStep.name}
               </span>
               <span
-                className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0"
+                className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0"
                 style={{
                   backgroundColor: `${currentStep.powerZone.color}20`,
                   borderColor: `${currentStep.powerZone.color}40`,
@@ -55,7 +55,7 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
               </span>
             </div>
             {nextStep && (
-              <div className="flex items-center gap-1 text-[10px] text-slate-400 truncate mt-0.5">
+              <div className="flex items-center gap-1 text-[9px] text-slate-400 truncate mt-0.5">
                 <span className="text-slate-500">Puis</span>
                 <ArrowRight className="w-2.5 h-2.5 text-slate-500 shrink-0" />
                 <span className="text-slate-300 truncate">{nextStep.name}</span>
@@ -69,13 +69,13 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
 
         {/* Big Countdown Timer */}
         <div className="text-right shrink-0">
-          <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
-            <Timer className={`w-3 h-3 ${stepRemainingSeconds <= 3 ? 'text-amber-400 animate-spin' : 'text-cyan-400'}`} />
+          <div className="flex items-center justify-end gap-1 text-[9px] text-slate-400 font-medium leading-none mb-0.5">
+            <Timer className={`w-2.5 h-2.5 ${stepRemainingSeconds <= 3 ? 'text-amber-400 animate-spin' : 'text-cyan-400'}`} />
             <span className={stepRemainingSeconds <= 3 ? 'text-amber-300 font-bold' : ''}>
               {stepRemainingSeconds <= 3 ? 'Prêt !' : 'Fin bloc'}
             </span>
           </div>
-          <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight leading-none transition-all ${
+          <div className={`text-xl sm:text-2xl font-black font-mono tracking-tight leading-none transition-all ${
             stepRemainingSeconds <= 3 ? 'text-amber-400 scale-105 animate-pulse' : 'text-white'
           }`}>
             {formatTime(stepRemainingSeconds)}
@@ -84,8 +84,8 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
       </div>
 
       {/* Row 2: Slim Segmented Timeline Bar & Remaining Time */}
-      <div className="space-y-1">
-        <div className="w-full h-2 sm:h-2.5 bg-slate-950 rounded-full p-0.5 border border-slate-800 flex gap-0.5 overflow-hidden">
+      <div className="space-y-0.5">
+        <div className="w-full h-1.5 sm:h-2 bg-slate-950 rounded-full p-0.5 border border-slate-800 flex gap-0.5 overflow-hidden">
           {workout.scaledSteps.map((step, idx) => {
             const widthPct = Math.max(2, (step.durationSeconds / totalDuration) * 100);
             const isCurrent = idx === currentStepIndex;
@@ -110,7 +110,7 @@ export const IntervalTimeline: React.FC<IntervalTimelineProps> = ({
           })}
         </div>
 
-        <div className="flex justify-between items-center text-[9px] sm:text-[10px] text-slate-400 font-medium px-0.5">
+        <div className="flex justify-between items-center text-[8.5px] sm:text-[9.5px] text-slate-400 font-medium px-0.5">
           <span>Bloc {currentStepIndex + 1}/{workout.scaledSteps.length}</span>
           <span className="flex items-center gap-1">
             <Flag className="w-2.5 h-2.5 text-emerald-400" />

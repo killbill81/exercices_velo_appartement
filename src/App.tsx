@@ -130,7 +130,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className={`flex-1 max-w-7xl w-full mx-auto ${
         activeTab === 'cockpit'
-          ? 'p-1 sm:p-2 pb-16 lg:pb-4 overflow-hidden h-full'
+          ? 'p-1 sm:p-2 pb-14 landscape:pb-11 lg:pb-3 overflow-hidden h-full'
           : 'p-3 sm:p-6 pb-24 lg:pb-8 overflow-y-auto'
       }`}>
         {activeTab === 'cockpit' && (
