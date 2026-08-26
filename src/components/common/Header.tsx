@@ -55,8 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs (Visible uniquement sur Desktop / Tablette) */}
-        <nav className="hidden md:flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800/80">
+        {/* Navigation Tabs (Visible uniquement sur Grand Écran PC / Tablette large >= 1024px) */}
+        <nav className="hidden lg:flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800/80">
           <button
             onClick={() => onTabChange('cockpit')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${

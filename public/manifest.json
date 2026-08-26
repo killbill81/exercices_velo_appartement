@@ -2,14 +2,15 @@
   "name": "Domyos EB900 B & Pixel Watch Trainer",
   "short_name": "Vélo Trainer",
   "description": "Entraînement structuré et suivi cardiaque sur vélo Domyos EB900 B et Google Pixel Watch 4",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#090d16",
-  "orientation": "landscape",
+  "orientation": "any",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "/favicon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

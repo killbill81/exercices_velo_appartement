@@ -53,15 +53,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    // 0. Forcer l'orientation en mode Paysage pour l'application installée (compteur vélo)
+    // 0. Libérer l'orientation pour un comportement mobile natif fluide (portrait/paysage)
     try {
-      if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'lock' in window.screen.orientation) {
-        (window.screen.orientation as unknown as { lock: (orientation: string) => Promise<void> }).lock('landscape').catch(() => {
-          // Si lock n'est pas autorisé par l'environnement (ex: hors plein écran), tenter unlock
-          if ('unlock' in window.screen.orientation) {
-            (window.screen.orientation as unknown as { unlock: () => Promise<void> }).unlock().catch(() => {});
-          }
-        });
+      if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'unlock' in window.screen.orientation) {
+        (window.screen.orientation as unknown as { unlock: () => Promise<void> }).unlock().catch(() => {});
       }
     } catch {
       // Ignorer si non supporté
@@ -153,8 +148,8 @@ export default function App() {
       {/* Main Content Area */}
       <main className={`flex-1 max-w-7xl w-full mx-auto ${
         activeTab === 'cockpit'
-          ? 'p-1 sm:p-2 overflow-hidden h-full'
-          : 'p-3 sm:p-6 pb-24 md:pb-6 overflow-y-auto'
+          ? 'p-1 sm:p-2 pb-16 lg:pb-4 overflow-hidden h-full'
+          : 'p-3 sm:p-6 pb-24 lg:pb-8 overflow-y-auto'
       }`}>
         {activeTab === 'cockpit' && (
           <LiveCockpit
