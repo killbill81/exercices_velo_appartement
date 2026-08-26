@@ -13,6 +13,7 @@ import { bluetoothManager } from './services/bluetooth/bluetoothManager';
 import { mockBluetoothService } from './services/bluetooth/mockBluetoothService';
 import { workoutEngine, WorkoutEngineState } from './services/workout/workoutEngine';
 import { historyService, DEFAULT_USER_PROFILE } from './services/storage/historyService';
+import { fitbitService } from './services/health/fitbitService';
 import { BluetoothConnectionState, UnifiedBikeState } from './types/bluetooth';
 import { UserProfile, CompletedSession } from './types/user';
 import { WorkoutDefinition } from './types/workout';
@@ -48,8 +49,29 @@ export default function App() {
       // Ignorer si non supporté
     }
 
+    // 0.bis Détection d'un retour OAuth Fitbit (#access_token=...)
+    let initialFitbitToken: string | null = null;
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const auth = fitbitService.parseAuthCallback(window.location.hash);
+      if (auth) {
+        initialFitbitToken = auth.accessToken;
+        historyService.updateUserProfile({
+          fitbitAccessToken: auth.accessToken,
+          fitbitUserId: auth.userId,
+          fitbitAutoSyncEnabled: true,
+        }).then((updated) => {
+          setUserProfile(updated);
+          // Nettoyer l'URL sans recharger
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        });
+      }
+    }
+
     // 1. Charger le profil utilisateur
     historyService.getUserProfile().then((profile) => {
+      if (initialFitbitToken) {
+        profile.fitbitAccessToken = initialFitbitToken;
+      }
       setUserProfile(profile);
       // Précharger une séance d'accueil (ex: 1ère séance du plan Fitness)
       if (!workoutEngine.getState().workout) {
@@ -75,8 +97,26 @@ export default function App() {
       }
     });
 
-    // 4. Clôture de séance
+    // 4. Clôture de séance & Synchronisation automatique
     const unsubFinish = workoutEngine.onFinish(async (session) => {
+      const currentProfile = await historyService.getUserProfile();
+      
+      // Auto-sync avec Fitbit & Google Health Connect si configuré
+      if (currentProfile.fitbitAccessToken && currentProfile.fitbitAutoSyncEnabled !== false) {
+        try {
+          const syncResult = await fitbitService.syncSession(session, currentProfile);
+          if (syncResult.success) {
+            session.fitbitSyncStatus = 'synced';
+            session.fitbitActivityId = syncResult.activityId;
+            session.fitbitSyncedAt = new Date().toISOString();
+          } else {
+            session.fitbitSyncStatus = 'failed';
+          }
+        } catch {
+          session.fitbitSyncStatus = 'failed';
+        }
+      }
+
       await historyService.saveSession(session);
       setSummarySession(session);
     });
@@ -166,7 +206,7 @@ export default function App() {
         )}
 
         {activeTab === 'history' && (
-          <HistoryDashboard userFtpWatts={userProfile.ftpWatts} />
+          <HistoryDashboard userProfile={userProfile} />
         )}
       </main>
 
@@ -201,7 +241,7 @@ export default function App() {
           setSummarySession(null);
           workoutEngine.stop();
         }}
-        userFtpWatts={userProfile.ftpWatts}
+        userProfile={userProfile}
       />
     </div>
   );

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { History, Calendar, Trophy, Download, Eye, Trash2, AlertTriangle } from 'lucide-react';
-import { CompletedSession, FtpTestHistoryItem } from '../../types/user';
+import { CompletedSession, FtpTestHistoryItem, UserProfile } from '../../types/user';
 import { historyService } from '../../services/storage/historyService';
 import { SessionSummaryModal } from '../summary/SessionSummaryModal';
 
 interface HistoryDashboardProps {
-  userFtpWatts: number;
+  userProfile: UserProfile;
 }
 
 function formatDuration(seconds: number): string {
@@ -14,7 +14,7 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s.toString().padStart(2, '0')}s`;
 }
 
-export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts }) => {
+export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userProfile }) => {
   const [sessions, setSessions] = useState<CompletedSession[]>([]);
   const [ftpHistory, setFtpHistory] = useState<FtpTestHistoryItem[]>([]);
   const [selectedSession, setSelectedSession] = useState<CompletedSession | null>(null);
@@ -244,7 +244,7 @@ export const HistoryDashboard: React.FC<HistoryDashboardProps> = ({ userFtpWatts
         session={selectedSession}
         isOpen={Boolean(selectedSession)}
         onClose={() => setSelectedSession(null)}
-        userFtpWatts={userFtpWatts}
+        userProfile={userProfile}
       />
     </div>
   );

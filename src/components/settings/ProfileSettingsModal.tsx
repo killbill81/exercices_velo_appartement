@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { User, X, Volume2, Mic, Smartphone, Check, Save, Zap } from 'lucide-react';
+import { User, X, Volume2, Mic, Smartphone, Check, Save, Zap, Heart, Link, Unlink, ShieldCheck } from 'lucide-react';
 import { UserProfile } from '../../types/user';
 import { historyService } from '../../services/storage/historyService';
 import { soundPlayer } from '../../services/audio/soundPlayer';
 import { speechCoach } from '../../services/audio/speechCoach';
+import { fitbitService } from '../../services/health/fitbitService';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -25,9 +26,31 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [voiceCoach, setVoiceCoach] = useState(userProfile.voiceCoachEnabled);
   const [wakeLock, setWakeLock] = useState(userProfile.screenWakeLockEnabled);
   const [autoBikeControl, setAutoBikeControl] = useState(userProfile.autoBikeControlEnabled ?? true);
+  
+  // Fitbit integration state
+  const [fitbitClientId, setFitbitClientId] = useState(userProfile.fitbitClientId || '');
+  const [fitbitAutoSync, setFitbitAutoSync] = useState(userProfile.fitbitAutoSyncEnabled ?? true);
+  const [fitbitAccessToken, setFitbitAccessToken] = useState(userProfile.fitbitAccessToken || '');
   const [saved, setSaved] = useState(false);
 
   if (!isOpen) return null;
+
+  const isFitbitConnected = Boolean(fitbitAccessToken);
+
+  const handleConnectFitbit = () => {
+    // Redirige vers la page d'authentification OAuth 2.0 Fitbit
+    const authUrl = fitbitService.getAuthorizationUrl(fitbitClientId);
+    window.location.href = authUrl;
+  };
+
+  const handleDisconnectFitbit = async () => {
+    setFitbitAccessToken('');
+    const updated = await historyService.updateUserProfile({
+      fitbitAccessToken: undefined,
+      fitbitUserId: undefined,
+    });
+    onProfileUpdated(updated);
+  };
 
   const handleSave = async () => {
     const updated = await historyService.updateUserProfile({
@@ -38,6 +61,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       voiceCoachEnabled: voiceCoach,
       screenWakeLockEnabled: wakeLock,
       autoBikeControlEnabled: autoBikeControl,
+      fitbitClientId: fitbitClientId.trim() || undefined,
+      fitbitAutoSyncEnabled: fitbitAutoSync,
+      fitbitAccessToken: fitbitAccessToken || undefined,
     });
 
     soundPlayer.setMuted(!soundAlerts);
@@ -194,6 +220,85 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 className="w-4 h-4 accent-cyan-500 rounded"
               />
             </label>
+          </div>
+
+          {/* Section Synchronisation Santé : Fitbit & Google Health */}
+          <div className="pt-3 border-t border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Heart className="w-3.5 h-3.5 text-rose-400" />
+                Fitbit & Google Health Connect
+              </h3>
+              {isFitbitConnected ? (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  <ShieldCheck className="w-3 h-3" />
+                  Connecté
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold text-slate-500">Non associé</span>
+              )}
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3">
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Connectez votre compte Fitbit pour synchroniser <strong>automatiquement</strong> la distance, le cardio, la puissance et les calories vers <strong>Fitbit</strong> et l'application <strong>Google Health Connect</strong>.
+              </p>
+
+              {isFitbitConnected ? (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <div className="text-xs font-mono text-cyan-400 truncate">
+                    ID: {userProfile.fitbitUserId || 'Compte actif'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDisconnectFitbit}
+                    className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold flex items-center gap-1.5 transition-all"
+                  >
+                    <Unlink className="w-3.5 h-3.5" />
+                    Déconnecter
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleConnectFitbit}
+                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+                  >
+                    <Link className="w-3.5 h-3.5" />
+                    Lier mon compte Fitbit & Google Health
+                  </button>
+                </div>
+              )}
+
+              {/* Option Synchronisation Automatique */}
+              <label className="flex items-center justify-between pt-2 border-t border-slate-800/80 cursor-pointer">
+                <div>
+                  <div className="text-xs font-bold text-white">Synchronisation automatique</div>
+                  <div className="text-[10px] text-slate-400">Envoi immédiat dès la fin de la séance</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={fitbitAutoSync}
+                  onChange={(e) => setFitbitAutoSync(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500 rounded"
+                />
+              </label>
+
+              {/* Paramètre Avancé : Client ID Optionnel */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Fitbit OAuth Client ID (Optionnel)
+                </label>
+                <input
+                  type="text"
+                  placeholder="23PZ6L"
+                  value={fitbitClientId}
+                  onChange={(e) => setFitbitClientId(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-300 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
 

@@ -36,6 +36,14 @@ export interface UserProfile {
   voiceCoachEnabled: boolean;
   screenWakeLockEnabled: boolean;
   autoBikeControlEnabled: boolean;
+  
+  // Intégration Fitbit & Google Health
+  fitbitClientId?: string;
+  fitbitAccessToken?: string;
+  fitbitUserId?: string;
+  fitbitAutoSyncEnabled?: boolean;
+  fitbitTokenExpiresAt?: string;
+
   updatedAt: string;
 }
 
@@ -82,6 +90,11 @@ export interface CompletedSession {
   timeInPowerZonesSeconds: number[]; // Index 0-6 pour Z1-Z7
   timeInHeartRateZonesSeconds: number[]; // Index 0-4 pour Z1-Z5
   
+  // Statut de synchronisation externe
+  fitbitSyncStatus?: 'pending' | 'synced' | 'failed' | 'disabled';
+  fitbitActivityId?: string;
+  fitbitSyncedAt?: string;
+
   // Échantillons bruts
   samples: SessionSample[];
 }
