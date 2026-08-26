@@ -410,6 +410,70 @@ class BluetoothManager {
     }
   }
 
+  /**
+   * Récupère la liste des périphériques Bluetooth déjà autorisés par Chrome (Reconnexion 1-clic)
+   */
+  public async getAuthorizedDevices(): Promise<BluetoothDevice[]> {
+    if (!this.isWebBluetoothSupported() || !navigator.bluetooth.getDevices) {
+      return [];
+    }
+    try {
+      return await navigator.bluetooth.getDevices();
+    } catch (err) {
+      console.warn("Impossible de récupérer les périphériques autorisés:", err);
+      return [];
+    }
+  }
+
+  /**
+   * Connexion directe à une montre déjà autorisée par le navigateur
+   */
+  public async connectAuthorizedWatch(device: BluetoothDevice): Promise<boolean> {
+    if (!device) return false;
+
+    try {
+      this.connectionState.watchConnecting = true;
+      this.connectionState.watchError = null;
+      this.notifyConnectionChanged();
+
+      this.watchDevice = device;
+      this.connectionState.watchDeviceName = device.name || 'Google Pixel Watch 4';
+
+      device.addEventListener('gattserverdisconnected', this.handleWatchDisconnected.bind(this));
+
+      if (!device.gatt) {
+        throw new Error('Serveur GATT introuvable');
+      }
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(BLE_SERVICES.HEART_RATE);
+      const hrChar = await service.getCharacteristic(BLE_CHARACTERISTICS.HEART_RATE_MEASUREMENT);
+
+      await hrChar.startNotifications();
+      hrChar.addEventListener('characteristicvaluechanged', (event: Event) => {
+        const target = event.target as unknown as { value: DataView };
+        if (target && target.value) {
+          this.latestWatchHr = decodeHeartRateMeasurement(target.value);
+          this.notifyStateChanged();
+        }
+      });
+
+      this.connectionState.watchConnected = true;
+      this.connectionState.watchConnecting = false;
+      this.notifyConnectionChanged();
+      this.notifyStateChanged();
+      return true;
+    } catch (err: unknown) {
+      console.error('Erreur reconnexion directe montre:', err);
+      const message = err instanceof Error ? err.message : 'Échec de reconnexion à la montre';
+      this.connectionState.watchConnected = false;
+      this.connectionState.watchConnecting = false;
+      this.connectionState.watchError = message;
+      this.notifyConnectionChanged();
+      return false;
+    }
+  }
+
   public async disconnectWatch(): Promise<void> {
     if (this.watchDevice && this.watchDevice.gatt?.connected) {
       this.watchDevice.gatt.disconnect();

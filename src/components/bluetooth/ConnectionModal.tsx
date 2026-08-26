@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bluetooth, Watch, X, CheckCircle2, AlertTriangle, RefreshCw, Zap, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bluetooth, Watch, X, CheckCircle2, AlertTriangle, RefreshCw, Zap, ShieldCheck, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { BluetoothConnectionState } from '../../types/bluetooth';
 import { bluetoothManager } from '../../services/bluetooth/bluetoothManager';
 
@@ -18,9 +18,25 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
   isSimulating,
   onToggleSimulation,
 }) => {
+  const [showWatchHelp, setShowWatchHelp] = useState(false);
+  const [authorizedDevices, setAuthorizedDevices] = useState<BluetoothDevice[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      bluetoothManager.getAuthorizedDevices().then((devices) => {
+        setAuthorizedDevices(devices);
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isWebBleSupported = bluetoothManager.isWebBluetoothSupported();
+  const pairedWatch = authorizedDevices.find(d => 
+    d.name?.toLowerCase().includes('watch') || 
+    d.name?.toLowerCase().includes('pixel') || 
+    d.name?.toLowerCase().includes('heart')
+  ) || (authorizedDevices.length > 0 ? authorizedDevices[0] : null);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
@@ -173,18 +189,45 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
               <p className="text-slate-400">
                 La montre permet un relevé ininterrompu même quand vous lâchez le guidon du vélo.
               </p>
-              <div className="pt-1.5 border-t border-slate-800/80 text-[10px] text-amber-300/90 leading-tight">
-                💡 <strong>Activation requise sur la montre :</strong> Par sécurité, Wear OS ne diffuse le signal cardio en balise Bluetooth que si une app de diffusion est active sur la montre (ex : app gratuite Wear OS <em>'Heart Rate to BLE'</em> ou <em>'Heart for Bluetooth'</em> sur le Play Store de votre montre, appuyez sur <em>Start</em> avant de cliquer sur Associer).
-              </div>
+            </div>
+
+            {/* Guide dépliant Wear OS */}
+            <div className="mb-3.5 bg-slate-900/80 border border-slate-800/80 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowWatchHelp(!showWatchHelp)}
+                className="w-full px-3 py-2 text-left flex items-center justify-between text-xs text-amber-300 font-semibold hover:bg-slate-800/50 transition-all"
+              >
+                <div className="flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>La montre n'apparaît pas dans la liste ?</span>
+                </div>
+                {showWatchHelp ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              {showWatchHelp && (
+                <div className="p-3 border-t border-slate-800 text-[11px] text-slate-300 space-y-2 leading-relaxed bg-slate-950/40">
+                  <p className="font-bold text-amber-300">
+                    💡 Pourquoi la Pixel Watch n'émet pas de signal automatiquement :
+                  </p>
+                  <p className="text-slate-400">
+                    Par souci d'économie de batterie, Wear OS coupe la balise Bluetooth dès que la déconnexion a lieu. Pour la rendre détectable :
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-slate-300 pl-1">
+                    <li>Sur votre montre, ouvrez l'application <strong>Fitbit</strong> ou l'application Wear OS <strong>Heart for Bluetooth</strong>.</li>
+                    <li>Lancez une activité (ex: <em>Vélo d'intérieur</em>) ou appuyez sur <strong>Start Broadcasting</strong>.</li>
+                    <li>Gardez l'écran de la montre <strong>allumé</strong> puis cliquez sur Associer ci-dessous.</li>
+                  </ol>
+                </div>
+              )}
             </div>
 
             {connectionState.watchError && (
-              <div className="mb-3 p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+              <div className="mb-3 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
                 {connectionState.watchError}
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
               {connectionState.watchConnected ? (
                 <button
                   onClick={() => bluetoothManager.disconnectWatch()}
@@ -193,23 +236,38 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
                   Déconnecter la montre
                 </button>
               ) : (
-                <button
-                  onClick={() => bluetoothManager.connectWatch()}
-                  disabled={connectionState.watchConnecting}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50"
-                >
-                  {connectionState.watchConnecting ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      Recherche de la Pixel Watch...
-                    </>
-                  ) : (
-                    <>
-                      <Watch className="w-3.5 h-3.5" />
-                      Associer la Pixel Watch 4
-                    </>
+                <>
+                  {/* Bouton Reconnexion Rapide si déjà mémorisée */}
+                  {pairedWatch && (
+                    <button
+                      onClick={() => bluetoothManager.connectAuthorizedWatch(pairedWatch)}
+                      disabled={connectionState.watchConnecting}
+                      className="w-full py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-current text-cyan-400" />
+                      Reconnexion Directe ({pairedWatch.name || 'Pixel Watch 4'})
+                    </button>
                   )}
-                </button>
+
+                  {/* Bouton Scan Standard */}
+                  <button
+                    onClick={() => bluetoothManager.connectWatch()}
+                    disabled={connectionState.watchConnecting}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+                  >
+                    {connectionState.watchConnecting ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        Recherche de la Pixel Watch...
+                      </>
+                    ) : (
+                      <>
+                        <Watch className="w-3.5 h-3.5" />
+                        {pairedWatch ? 'Re-scanner un nouvel appareil' : 'Associer la Pixel Watch 4'}
+                      </>
+                    )}
+                  </button>
+                </>
               )}
             </div>
           </div>
