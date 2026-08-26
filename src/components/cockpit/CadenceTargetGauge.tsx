@@ -5,18 +5,20 @@ import { NeonArcGauge } from './NeonArcGauge';
 interface CadenceTargetGaugeProps {
   currentCadenceRpm: number;
   targetCadenceRpm?: number;
-  size?: 'compact' | 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl' | 'full';
+  className?: string;
 }
 
 export const CadenceTargetGauge: React.FC<CadenceTargetGaugeProps> = ({
   currentCadenceRpm,
   targetCadenceRpm = 85,
-  size = 'compact',
+  size = 'full',
+  className = '',
 }) => {
   const feedback = getCadenceFeedback(currentCadenceRpm, targetCadenceRpm);
 
   let statusBadge = `${targetCadenceRpm} RPM`;
-  let statusBadgeClass = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+  let statusBadgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
 
   if (feedback.status === 'on-target' && currentCadenceRpm > 0) {
     statusBadge = 'Cadence Idéale ✨';
@@ -45,6 +47,7 @@ export const CadenceTargetGauge: React.FC<CadenceTargetGaugeProps> = ({
       statusBadge={statusBadge}
       statusBadgeClass={statusBadgeClass}
       size={size}
+      className={`border-emerald-500/30 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-emerald-950/20 hover:border-emerald-500/50 ${className}`}
     />
   );
 };

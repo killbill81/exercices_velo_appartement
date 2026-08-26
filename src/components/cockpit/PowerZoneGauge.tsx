@@ -7,14 +7,16 @@ interface PowerZoneGaugeProps {
   currentWatts: number;
   targetWatts: number;
   ftpWatts: number;
-  size?: 'compact' | 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl' | 'full';
+  className?: string;
 }
 
 export const PowerZoneGauge: React.FC<PowerZoneGaugeProps> = ({
   currentWatts,
   targetWatts,
   ftpWatts,
-  size = 'compact',
+  size = 'full',
+  className = '',
 }) => {
   const currentZone = getPowerZone(currentWatts, ftpWatts);
   const theme = getZoneTheme(currentZone.zone);
@@ -53,6 +55,7 @@ export const PowerZoneGauge: React.FC<PowerZoneGaugeProps> = ({
       statusBadge={statusBadge}
       statusBadgeClass={statusBadgeClass}
       size={size}
+      className={`border-cyan-500/30 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-cyan-950/20 hover:border-cyan-500/50 ${className}`}
     />
   );
 };

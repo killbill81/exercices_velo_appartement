@@ -12,7 +12,9 @@ export interface NeonArcGaugeProps {
   subLabel?: string;
   statusBadge?: string;
   statusBadgeClass?: string;
-  size?: 'compact' | 'md' | 'lg' | 'xl';
+  size?: 'compact' | 'md' | 'lg' | 'xl' | 'full';
+  className?: string;
+  cardStyle?: React.CSSProperties;
 }
 
 export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
@@ -27,7 +29,9 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
   subLabel,
   statusBadge,
   statusBadgeClass = 'bg-slate-800 text-slate-300',
-  size = 'lg',
+  size = 'full',
+  className = '',
+  cardStyle,
 }) => {
   // Arc geometry: 240 degrees (from 150 deg to 390 deg)
   const radius = 80;
@@ -70,42 +74,45 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
   // Dimension scaling
   const sizeClasses = {
-    compact: 'w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36',
+    compact: 'w-28 h-28 sm:w-36 sm:h-36',
     md: 'w-40 h-40 sm:w-48 sm:h-48',
-    lg: 'w-48 h-48 sm:w-56 sm:h-56 lg:w-60 lg:h-60',
-    xl: 'w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72',
+    lg: 'w-48 h-48 sm:w-56 sm:h-56',
+    xl: 'w-56 h-56 sm:w-64 sm:h-64',
+    full: 'w-full max-w-[210px] max-h-[170px] aspect-square',
   }[size];
 
   const valueFontSize = {
     compact: 'text-2xl xs:text-3xl sm:text-4xl',
     md: 'text-3xl sm:text-4xl',
-    lg: 'text-4xl sm:text-5xl lg:text-6xl',
-    xl: 'text-5xl sm:text-6xl lg:text-7xl',
+    lg: 'text-4xl sm:text-5xl',
+    xl: 'text-5xl sm:text-6xl',
+    full: 'text-3xl xs:text-4xl sm:text-5xl',
   }[size];
 
-  const containerPadding = size === 'compact' ? 'p-1.5 sm:p-2' : 'p-3 sm:p-4';
-
   return (
-    <div className={`relative flex flex-col items-center justify-center ${containerPadding} rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md backdrop-blur-md transition-all duration-300 hover:border-slate-700`}>
+    <div
+      style={cardStyle}
+      className={`relative flex flex-col justify-between items-center p-2.5 sm:p-3.5 rounded-3xl bg-slate-900/95 border shadow-xl backdrop-blur-md transition-all duration-300 ${className}`}
+    >
       {/* Header Label & Badge */}
-      <div className="w-full flex items-center justify-between px-1 mb-0.5 z-10">
-        <span className="text-[10px] sm:text-xs font-black tracking-wider text-slate-400 uppercase">
+      <div className="w-full flex items-center justify-between px-1 z-10">
+        <span className="text-[11px] sm:text-xs font-black tracking-wider text-slate-300 uppercase">
           {label}
         </span>
         {statusBadge && (
-          <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-full border transition-colors ${statusBadgeClass}`}>
+          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border transition-colors ${statusBadgeClass}`}>
             {statusBadge}
           </span>
         )}
       </div>
 
       {/* SVG Arc Gauge */}
-      <div className={`relative ${sizeClasses} flex items-center justify-center`}>
+      <div className={`relative ${sizeClasses} flex items-center justify-center my-auto`}>
         <svg viewBox="0 0 200 200" className="w-full h-full transform transition-all duration-300">
           <defs>
             {/* Dynamic Drop Shadow Glow */}
             <filter id={`glow-${label}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={glowColor} floodOpacity="0.8" />
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor={glowColor} floodOpacity="0.85" />
             </filter>
             {/* Gradient definition */}
             <linearGradient id={`grad-${label}`} x1="0%" y1="100%" x2="100%" y2="0%">
@@ -140,10 +147,10 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
             <circle
               cx={targetPoint.x}
               cy={targetPoint.y}
-              r="6"
+              r="6.5"
               fill="#ffffff"
               stroke={color}
-              strokeWidth="2"
+              strokeWidth="2.5"
               className="animate-pulse shadow-lg"
             />
           )}
@@ -153,8 +160,8 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
           <div className="flex items-baseline gap-0.5">
             <span
-              className={`font-black tracking-tight text-white ${valueFontSize} drop-shadow-md transition-colors duration-200 leading-none`}
-              style={{ textShadow: `0 0 16px ${glowColor}` }}
+              className={`font-black tracking-tight text-white ${valueFontSize} drop-shadow-md transition-colors duration-200 leading-none font-mono`}
+              style={{ textShadow: `0 0 18px ${glowColor}` }}
             >
               {Math.round(currentValue)}
             </span>
@@ -165,11 +172,11 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
           {/* Target Delta or Sub-label */}
           {targetValue !== undefined && targetValue > 0 ? (
-            <div className="text-[10px] sm:text-xs font-semibold text-slate-400 mt-0.5 leading-none">
-              Cible : <span className="font-bold text-slate-200">{targetValue} {unit}</span>
+            <div className="text-[10px] sm:text-xs font-bold text-slate-300 mt-1 leading-none">
+              Cible : <span className="text-white font-extrabold">{targetValue} {unit}</span>
             </div>
           ) : subLabel ? (
-            <div className="text-[10px] sm:text-xs font-medium text-slate-400 mt-0.5 leading-none">
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-400 mt-1 leading-none">
               {subLabel}
             </div>
           ) : null}
@@ -178,7 +185,10 @@ export const NeonArcGauge: React.FC<NeonArcGaugeProps> = ({
 
       {/* Footer Zone Name */}
       {zoneName && (
-        <div className="mt-0.5 text-[10px] sm:text-xs font-bold text-center transition-colors truncate max-w-full px-1" style={{ color }}>
+        <div 
+          className="text-[11px] sm:text-xs font-extrabold text-center transition-colors truncate max-w-full px-2 py-0.5 rounded-lg bg-slate-950/60 border border-slate-800/80 w-full"
+          style={{ color }}
+        >
           {zoneName}
         </div>
       )}

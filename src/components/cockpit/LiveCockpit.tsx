@@ -1,8 +1,7 @@
 import React from 'react';
 import { UnifiedBikeState } from '../../types/bluetooth';
-import { UserProfile } from '../../types/user';
 import { WorkoutEngineState } from '../../services/workout/workoutEngine';
-import { bluetoothManager } from '../../services/bluetooth/bluetoothManager';
+import { UserProfile } from '../../types/user';
 import { getPowerZone } from '../../services/workout/ftpCalculator';
 import { getZoneTheme } from '../../types/uiTheme';
 import { PowerZoneGauge } from './PowerZoneGauge';
@@ -11,6 +10,7 @@ import { IntervalTimeline } from './IntervalTimeline';
 import { CompactMetricStrip } from './CompactMetricStrip';
 import { LateralControls } from './LateralControls';
 import { VisualPulseOverlay } from './VisualPulseOverlay';
+import { bluetoothManager } from '../../services/bluetooth/bluetoothManager';
 
 interface LiveCockpitProps {
   bikeState: UnifiedBikeState;
@@ -62,28 +62,30 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
       />
 
       {/* 2. Conteneur Principal : 2 colonnes en Paysage / Desktop, 1 colonne en Portrait Mobile */}
-      <div className="w-full h-full flex flex-col landscape:flex-row lg:flex-row items-stretch justify-between gap-1.5 sm:gap-3 overflow-hidden">
+      <div className="w-full h-full flex flex-col landscape:flex-row lg:flex-row items-stretch justify-between gap-1.5 sm:gap-2.5 overflow-hidden">
         
-        {/* COLONNE GAUCHE (ou Milieu en portrait) : Jauges Néon Duo (Watts + Cadence) */}
-        <div className="w-full landscape:w-[48%] lg:w-[48%] flex flex-col justify-center items-center shrink-0 my-auto">
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-3 w-full max-w-lg">
+        {/* COLONNE GAUCHE : Jauges Néon Duo Pleine Hauteur (Watts + Cadence) */}
+        <div className="w-full landscape:w-[48%] lg:w-[48%] h-full flex flex-col justify-stretch shrink-0">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 w-full h-full">
             <PowerZoneGauge
               currentWatts={bikeState.powerWatts}
               targetWatts={workoutState.targetWatts}
               ftpWatts={userProfile.ftpWatts}
-              size="compact"
+              size="full"
+              className="h-full flex-1"
             />
 
             <CadenceTargetGauge
               currentCadenceRpm={bikeState.cadenceRpm}
               targetCadenceRpm={workoutState.targetCadenceRpm || 85}
-              size="compact"
+              size="full"
+              className="h-full flex-1"
             />
           </div>
         </div>
 
-        {/* COLONNE DROITE : Timeline, Métriques & Commandes */}
-        <div className="w-full landscape:w-[52%] lg:w-[52%] flex flex-col justify-between h-full gap-1 overflow-hidden py-0.5">
+        {/* COLONNE DROITE : Timeline, Grille Métriques XXL & Commandes */}
+        <div className="w-full landscape:w-[52%] lg:w-[52%] flex flex-col justify-between h-full gap-1.5 overflow-hidden py-0.5">
           {/* Haut Droite : Timeline Palier */}
           <div className="w-full shrink-0">
             {workoutState.workout ? (
@@ -96,10 +98,10 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
                 nextStep={workoutState.nextStep}
               />
             ) : (
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 flex items-center justify-between gap-2 shadow-lg">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex items-center justify-between gap-2 shadow-lg">
                 <div>
                   <h3 className="text-xs font-bold text-white">Aucun programme actif</h3>
-                  <p className="text-[10px] text-slate-400">Pédalage libre ou choisissez un plan.</p>
+                  <p className="text-[10px] text-slate-400">Pédalage libre ou choisissez un plan structuré.</p>
                 </div>
                 <button
                   onClick={onOpenPlanSelector}
@@ -111,8 +113,8 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
             )}
           </div>
 
-          {/* Milieu Droite : Ruban Métriques */}
-          <div className="w-full shrink-0">
+          {/* Milieu Droite : Grille de Métriques Haute Visibilité Spacieuse */}
+          <div className="w-full flex-1 min-h-0 flex flex-col">
             <CompactMetricStrip
               heartRateBpm={bikeState.heartRateBpm}
               heartRateSource={bikeState.heartRateSource}
@@ -124,10 +126,11 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
               resistanceLevel={bikeState.resistanceLevel}
               isAutoControlActive={bikeState.isAutoControlActive}
               onToggleAutoControl={() => bluetoothManager.setAutoControlEnabled(!bikeState.isAutoControlActive)}
+              className="h-full flex-1"
             />
           </div>
 
-          {/* Bas Droite : Commandes Tactiles */}
+          {/* Bas Droite : Commandes Tactiles au Pouce */}
           <div className="w-full shrink-0">
             <LateralControls
               status={workoutState.status}
