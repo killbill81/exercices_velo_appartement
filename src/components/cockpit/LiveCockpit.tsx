@@ -61,11 +61,11 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
         nextWatts={workoutState.nextStep?.targetWatts}
       />
 
-      {/* 2. Conteneur Principal : 2 colonnes en Paysage, 1 colonne en Portrait */}
-      <div className="w-full h-full flex flex-col landscape:flex-row md:flex-row items-stretch justify-between gap-1.5 sm:gap-3 overflow-hidden">
+      {/* 2. Conteneur Principal : 2 colonnes en Paysage / Desktop, 1 colonne en Portrait Mobile */}
+      <div className="w-full h-full flex flex-col landscape:flex-row lg:flex-row items-stretch justify-between gap-1.5 sm:gap-3 overflow-hidden">
         
-        {/* COLONNE GAUCHE : Jauges Néon Duo (Watts + Cadence) */}
-        <div className="w-full landscape:w-[48%] md:w-[48%] flex flex-col justify-center items-center shrink-0 my-auto">
+        {/* COLONNE GAUCHE (ou Milieu en portrait) : Jauges Néon Duo (Watts + Cadence) */}
+        <div className="w-full landscape:w-[48%] lg:w-[48%] flex flex-col justify-center items-center shrink-0 my-auto">
           <div className="grid grid-cols-2 gap-1.5 sm:gap-3 w-full max-w-lg">
             <PowerZoneGauge
               currentWatts={bikeState.powerWatts}
@@ -83,7 +83,7 @@ export const LiveCockpit: React.FC<LiveCockpitProps> = ({
         </div>
 
         {/* COLONNE DROITE : Timeline, Métriques & Commandes */}
-        <div className="w-full landscape:w-[52%] md:w-[52%] flex flex-col justify-between h-full gap-1 overflow-hidden py-0.5">
+        <div className="w-full landscape:w-[52%] lg:w-[52%] flex flex-col justify-between h-full gap-1 overflow-hidden py-0.5">
           {/* Haut Droite : Timeline Palier */}
           <div className="w-full shrink-0">
             {workoutState.workout ? (

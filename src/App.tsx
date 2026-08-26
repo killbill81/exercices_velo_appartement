@@ -33,26 +33,12 @@ export default function App() {
   // Simulation mode
   const [isSimulating, setIsSimulating] = useState(false);
 
-  // Forced 90deg landscape mode
-  const [isForceLandscape, setIsForceLandscape] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('velo_force_landscape') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const handleToggleForceLandscape = () => {
-    setIsForceLandscape((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('velo_force_landscape', String(next));
-      } catch {}
-      return next;
-    });
-  };
-
   useEffect(() => {
+    // Nettoyage éventuel d'anciens flags de rotation forcée
+    try {
+      localStorage.removeItem('velo_force_landscape');
+    } catch {}
+
     // 0. Libérer l'orientation pour un comportement mobile natif fluide (portrait/paysage)
     try {
       if (typeof window !== 'undefined' && 'screen' in window && window.screen.orientation && 'unlock' in window.screen.orientation) {
@@ -128,9 +114,7 @@ export default function App() {
   };
 
   return (
-    <div className={`h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white overflow-hidden ${
-      isForceLandscape ? 'forced-landscape-mode' : ''
-    }`}>
+    <div className="h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white overflow-hidden">
       {/* Header */}
       <Header
         activeTab={activeTab}
@@ -141,8 +125,6 @@ export default function App() {
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         isSimulating={isSimulating}
         onToggleSimulation={handleToggleSimulation}
-        isForceLandscape={isForceLandscape}
-        onToggleForceLandscape={handleToggleForceLandscape}
       />
 
       {/* Main Content Area */}
