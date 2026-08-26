@@ -13,6 +13,7 @@ import { bluetoothManager } from './services/bluetooth/bluetoothManager';
 import { mockBluetoothService } from './services/bluetooth/mockBluetoothService';
 import { workoutEngine, WorkoutEngineState } from './services/workout/workoutEngine';
 import { historyService, DEFAULT_USER_PROFILE } from './services/storage/historyService';
+import { googleFitService } from './services/health/googleFitService';
 import { fitbitService } from './services/health/fitbitService';
 import { BluetoothConnectionState, UnifiedBikeState } from './types/bluetooth';
 import { UserProfile, CompletedSession } from './types/user';
@@ -49,19 +50,34 @@ export default function App() {
       // Ignorer si non supporté
     }
 
-    // 0.bis Détection d'un retour OAuth Fitbit (#access_token=...)
-    let initialFitbitToken: string | null = null;
+    // 0.bis Détection d'un retour OAuth (Google Fit ou Fitbit)
     if (typeof window !== 'undefined' && window.location.hash) {
-      const auth = fitbitService.parseAuthCallback(window.location.hash);
-      if (auth) {
-        initialFitbitToken = auth.accessToken;
+      const hash = window.location.hash;
+
+      // 1. Google Fit OAuth callback
+      const googleAuth = googleFitService.parseAuthCallback(hash);
+      if (googleAuth) {
+        googleFitService.fetchUserEmail(googleAuth.accessToken).then((email) => {
+          historyService.updateUserProfile({
+            googleFitAccessToken: googleAuth.accessToken,
+            googleFitUserEmail: email,
+            googleFitAutoSyncEnabled: true,
+          }).then((updated) => {
+            setUserProfile(updated);
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          });
+        });
+      }
+
+      // 2. Fitbit OAuth callback
+      const fitbitAuth = fitbitService.parseAuthCallback(hash);
+      if (fitbitAuth) {
         historyService.updateUserProfile({
-          fitbitAccessToken: auth.accessToken,
-          fitbitUserId: auth.userId,
+          fitbitAccessToken: fitbitAuth.accessToken,
+          fitbitUserId: fitbitAuth.userId,
           fitbitAutoSyncEnabled: true,
         }).then((updated) => {
           setUserProfile(updated);
-          // Nettoyer l'URL sans recharger
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         });
       }
@@ -69,9 +85,6 @@ export default function App() {
 
     // 1. Charger le profil utilisateur
     historyService.getUserProfile().then((profile) => {
-      if (initialFitbitToken) {
-        profile.fitbitAccessToken = initialFitbitToken;
-      }
       setUserProfile(profile);
       // Précharger une séance d'accueil (ex: 1ère séance du plan Fitness)
       if (!workoutEngine.getState().workout) {
@@ -101,7 +114,23 @@ export default function App() {
     const unsubFinish = workoutEngine.onFinish(async (session) => {
       const currentProfile = await historyService.getUserProfile();
       
-      // Auto-sync avec Fitbit & Google Health Connect si configuré
+      // Auto-sync avec Google Fit (prioritaire, style Decathlon)
+      if (currentProfile.googleFitAccessToken && currentProfile.googleFitAutoSyncEnabled !== false) {
+        try {
+          const syncResult = await googleFitService.syncSession(session, currentProfile);
+          if (syncResult.success) {
+            session.googleFitSyncStatus = 'synced';
+            session.googleFitSessionId = syncResult.sessionId;
+            session.googleFitSyncedAt = new Date().toISOString();
+          } else {
+            session.googleFitSyncStatus = 'failed';
+          }
+        } catch {
+          session.googleFitSyncStatus = 'failed';
+        }
+      }
+      
+      // Auto-sync avec Fitbit si activé
       if (currentProfile.fitbitAccessToken && currentProfile.fitbitAutoSyncEnabled !== false) {
         try {
           const syncResult = await fitbitService.syncSession(session, currentProfile);

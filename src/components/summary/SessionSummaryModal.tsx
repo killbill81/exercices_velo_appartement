@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Download, X, Flame, Zap, Heart, RotateCw, Route, Clock, Activity, CheckCircle2, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import { CompletedSession, UserProfile } from '../../types/user';
 import { historyService } from '../../services/storage/historyService';
+import { googleFitService } from '../../services/health/googleFitService';
 import { fitbitService } from '../../services/health/fitbitService';
 import { calculatePowerZones } from '../../services/workout/ftpCalculator';
 
@@ -25,8 +26,10 @@ export const SessionSummaryModal: React.FC<SessionSummaryModalProps> = ({
   userProfile,
 }) => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const [syncProvider, setSyncProvider] = useState<'google' | 'fitbit' | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  const isGoogleConnected = Boolean(userProfile.googleFitAccessToken);
   const isFitbitConnected = Boolean(userProfile.fitbitAccessToken);
 
   useEffect(() => {
@@ -36,35 +39,63 @@ export const SessionSummaryModal: React.FC<SessionSummaryModalProps> = ({
       return;
     }
 
-    // Si déjà synchronisé
+    // Si déjà synchronisé avec Google Fit ou Fitbit
+    if (session.googleFitSyncStatus === 'synced') {
+      setSyncStatus('synced');
+      setSyncProvider('google');
+      return;
+    }
     if (session.fitbitSyncStatus === 'synced') {
       setSyncStatus('synced');
+      setSyncProvider('fitbit');
       return;
     }
 
-    // Synchronisation automatique si le compte est lié et l'auto-sync activé
-    if (isFitbitConnected && userProfile.fitbitAutoSyncEnabled !== false) {
+    // Synchronisation automatique Google Fit prioritaire (style Decathlon)
+    if (isGoogleConnected && userProfile.googleFitAutoSyncEnabled !== false) {
+      handleSyncGoogleFit();
+    } else if (isFitbitConnected && userProfile.fitbitAutoSyncEnabled !== false) {
       handleSyncFitbit();
     }
-  }, [isOpen, session, userProfile.fitbitAccessToken]);
+  }, [isOpen, session, userProfile.googleFitAccessToken, userProfile.fitbitAccessToken]);
+
+  const handleSyncGoogleFit = async () => {
+    if (!session || !isGoogleConnected) return;
+
+    setSyncStatus('syncing');
+    setSyncProvider('google');
+    setSyncError(null);
+
+    const result = await googleFitService.syncSession(session, userProfile);
+
+    if (result.success) {
+      setSyncStatus('synced');
+      session.googleFitSyncStatus = 'synced';
+      session.googleFitSessionId = result.sessionId;
+      session.googleFitSyncedAt = new Date().toISOString();
+    } else {
+      setSyncStatus('error');
+      setSyncError(result.error || 'Échec de synchronisation Google Fit');
+    }
+  };
 
   const handleSyncFitbit = async () => {
     if (!session || !isFitbitConnected) return;
 
     setSyncStatus('syncing');
+    setSyncProvider('fitbit');
     setSyncError(null);
 
     const result = await fitbitService.syncSession(session, userProfile);
 
     if (result.success) {
       setSyncStatus('synced');
-      // Mettre à jour l'état de la séance
       session.fitbitSyncStatus = 'synced';
       session.fitbitActivityId = result.activityId;
       session.fitbitSyncedAt = new Date().toISOString();
     } else {
       setSyncStatus('error');
-      setSyncError(result.error || 'Échec de synchronisation');
+      setSyncError(result.error || 'Échec de synchronisation Fitbit');
     }
   };
 
@@ -187,12 +218,12 @@ export const SessionSummaryModal: React.FC<SessionSummaryModalProps> = ({
             </div>
           </div>
 
-          {/* Health & Fitbit Auto-Sync Status Card */}
+          {/* Health & Cloud Auto-Sync Status Card (Google Fit & Fitbit) */}
           <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                <Heart className="w-4 h-4 text-rose-500" />
-                <span>Fitbit & Google Health Connect</span>
+                <Activity className="w-4 h-4 text-cyan-400" />
+                <span>{syncProvider === 'google' || isGoogleConnected ? 'Google Fit & Health Connect' : 'Fitbit & Health Connect'}</span>
               </div>
               {syncStatus === 'synced' && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
@@ -212,25 +243,39 @@ export const SessionSummaryModal: React.FC<SessionSummaryModalProps> = ({
                   Non synchronisé
                 </span>
               )}
-              {syncStatus === 'idle' && !isFitbitConnected && (
-                <span className="text-[10px] text-slate-500 font-semibold">Non associé</span>
+              {syncStatus === 'idle' && !isGoogleConnected && !isFitbitConnected && (
+                <span className="text-[10px] text-slate-500 font-semibold">Non connecté</span>
               )}
             </div>
 
             {syncStatus === 'synced' ? (
               <div className="flex items-center justify-between pt-1">
                 <p className="text-xs text-slate-400">
-                  Activité enregistrée avec succès dans Fitbit et disponible dans Google Health.
+                  {syncProvider === 'google'
+                    ? 'Séance enregistrée dans Google Fit et disponible dans Google Health Connect.'
+                    : 'Séance enregistrée dans Fitbit et synchronisée.'}
                 </p>
-                <a
-                  href="https://www.fitbit.com/activities"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 shrink-0 ml-2"
-                >
-                  <span>Voir sur Fitbit</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                {syncProvider === 'google' ? (
+                  <a
+                    href="https://fit.google.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 shrink-0 ml-2"
+                  >
+                    <span>Google Fit</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                ) : (
+                  <a
+                    href="https://www.fitbit.com/activities"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 shrink-0 ml-2"
+                  >
+                    <span>Fitbit</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
             ) : syncStatus === 'error' ? (
               <div className="flex items-center justify-between pt-1">
@@ -238,22 +283,22 @@ export const SessionSummaryModal: React.FC<SessionSummaryModalProps> = ({
                   {syncError || 'Erreur lors de la synchronisation'}
                 </p>
                 <button
-                  onClick={handleSyncFitbit}
+                  onClick={isGoogleConnected ? handleSyncGoogleFit : handleSyncFitbit}
                   className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-bold transition-all flex items-center gap-1"
                 >
                   <RefreshCw className="w-3 h-3" />
                   Réessayer
                 </button>
               </div>
-            ) : !isFitbitConnected ? (
+            ) : !isGoogleConnected && !isFitbitConnected ? (
               <p className="text-xs text-slate-400">
-                Associez votre compte Fitbit dans votre profil pour synchroniser automatiquement vos séances vers Fitbit et Google Health Connect.
+                Connectez votre compte Google dans votre profil pour synchroniser automatiquement vos prochaines séances avec Google Fit et Google Health Connect.
               </p>
             ) : (
               <div className="flex items-center justify-between pt-1">
                 <p className="text-xs text-slate-400">Prêt pour la synchronisation.</p>
                 <button
-                  onClick={handleSyncFitbit}
+                  onClick={isGoogleConnected ? handleSyncGoogleFit : handleSyncFitbit}
                   className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 text-xs font-bold transition-all"
                 >
                   Synchroniser maintenant
